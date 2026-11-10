@@ -252,8 +252,7 @@ input {
 }
 .current {
   filter: blur(0px);
-  font-family: "SF Pro", var(--tamil-font), var(--hindi-font) !important;
-  scale: 1 !important;
+    scale: 1 !important;
   opacity: 1 !important;
   animation: textShine forwards;
   -webkit-animation: textShine forwards;

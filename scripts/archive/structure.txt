@@ -1,0 +1,292 @@
+.
+├── append_close_btn_css.js
+├── append_modal_css.js
+├── apply_instant_playback.js
+├── bun.lockb
+├── components
+│   ├── AmbientStardust.tsx
+│   ├── AppleMusicSettingsModal.tsx
+│   ├── AudioSpectrumVisualizer.tsx
+│   ├── AuroraMeshOrbs.tsx
+│   ├── FluidAuroraMesh.tsx
+│   ├── icons
+│   │   ├── GruvboxIcon.tsx
+│   │   ├── gruvboxPaths.json
+│   │   └── index.ts
+│   ├── InstrumentalBreak.tsx
+│   ├── NotPlaying.tsx
+│   ├── RiffWavyProgressBar.tsx
+│   ├── Signin.tsx
+│   ├── SingleInstanceGuard.tsx
+│   └── VinylTurntable.tsx
+├── docs
+│   ├── README.md
+│   └── reports
+│       ├── category_tabs_and_glass_translucency_report.md
+│       ├── gruvbox_icons_migration.md
+│       ├── karaoke_multiline_sweep_fix.md
+│       ├── lyric_movement_styles_rainbow_and_color_selection_report.md
+│       ├── lyrics_progression_lag_and_monotonicity_fix.md
+│       ├── lyrics_underglow_left_blend_fix_report.md
+│       ├── performance_diagnostics_suite_report.md
+│       ├── persistent_cache_and_server_resilience.md
+│       ├── playback_controls_and_liked_songs_fix_report.md
+│       ├── playback_speed_and_smtc_fix.md
+│       ├── riff_redesign_and_header_fix_report.md
+│       ├── riff_settings_m3_theming_and_transparency_report.md
+│       ├── settings_fps_pinned_nav_and_pure_lyrics_preview_report.md
+│       ├── settings_header_redesign_and_theme_reactivity_report.md
+│       ├── settings_redesign_and_performance_optimization_report.md
+│       ├── settings_theme_matching_report.md
+│       ├── single_instance_and_redesigned_signin.md
+│       ├── spotify_oauth_429_error_fix.md
+│       ├── spotify_only_smtc_filter_report.md
+│       └── tauri_2_desktop_migration.md
+├── .env
+├── .env.example
+├── .env.local
+├── .eslintrc.json
+├── find_sliders.js
+├── fix_all_comments.js
+├── fix_css.js
+├── fix_handle_quit.js
+├── fix_modal_ts.js
+├── fix_order.js
+├── fix_palette.js
+├── fix_rainbow_css.js
+├── fix_syntax.js
+├── GEMINI.md
+├── .gitignore
+├── Instructions
+│   └── features.md
+├── launch-desktop.vbs
+├── launch-kiosk.bat
+├── launch-kiosk.ps1
+├── lib
+│   ├── extract.ts
+│   ├── get_smtc.ps1
+│   ├── localMediaBridge.ts
+│   ├── lyricsProviders
+│   │   ├── genius.ts
+│   │   ├── index.ts
+│   │   ├── kugou.ts
+│   │   ├── lrclib.ts
+│   │   ├── lrcParser.ts
+│   │   ├── musixmatch.ts
+│   │   ├── netease.ts
+│   │   ├── spotify.ts
+│   │   └── types.ts
+│   ├── lyricsSources.ts
+│   ├── lyricTokenizer.ts
+│   ├── media_control.ps1
+│   ├── msTomin.ts
+│   ├── msTosec.ts
+│   ├── paletteExtractor.ts
+│   ├── performanceMetrics.ts
+│   ├── persistentCache.ts
+│   ├── queuePrefetchCoordinator.ts
+│   ├── rateLimitCoordinator.ts
+│   ├── resilientFetch.ts
+│   ├── spotify.ts
+│   ├── trackVariants.ts
+│   ├── useHqPlayback.ts
+│   └── useInterval.ts
+├── LICENSE
+├── LiricsApp.cs
+├── next.config.mjs
+├── next-env.d.ts
+├── normalize.js
+├── normalize_lf.js
+├── package.json
+├── package-lock.json
+├── pages
+│   ├── api
+│   │   ├── auth
+│   │   │   └── [...nextauth].ts
+│   │   ├── lyrics.tsx
+│   │   ├── spotify
+│   │   │   ├── liked.ts
+│   │   │   ├── playback.ts
+│   │   │   ├── pos.ts
+│   │   │   ├── queue.ts
+│   │   │   ├── seek.ts
+│   │   │   ├── song.ts
+│   │   │   └── status.ts
+│   │   └── system
+│   │       ├── cache.ts
+│   │       ├── exit.ts
+│   │       ├── open-graphics.ts
+│   │       ├── open.ts
+│   │       └── performance.ts
+│   ├── _app.tsx
+│   ├── auth
+│   │   ├── error.tsx
+│   │   └── signin.tsx
+│   ├── _document.tsx
+│   ├── index.tsx
+│   ├── lyrics.tsx
+│   ├── search.tsx
+│   └── share.tsx
+├── patch_index_and_css.js
+├── patch_modal.js
+├── providers
+│   ├── index.tsx
+│   ├── LyricsContext.tsx
+│   ├── SongContext.tsx
+│   └── UserContext.tsx
+├── public
+│   ├── favicon.svg
+│   ├── icons
+│   │   └── gruvbox
+│   │       ├── chat.svg
+│   │       ├── close.svg
+│   │       ├── focus.svg
+│   │       ├── gear.svg
+│   │       ├── heart.svg
+│   │       ├── image.svg
+│   │       ├── magic.svg
+│   │       ├── moon.svg
+│   │       ├── more.svg
+│   │       ├── next.svg
+│   │       ├── palette.svg
+│   │       ├── pause.svg
+│   │       ├── play.svg
+│   │       ├── previous.svg
+│   │       ├── repeat.svg
+│   │       ├── replay.svg
+│   │       ├── shuffle.svg
+│   │       ├── star-outline.svg
+│   │       ├── star.svg
+│   │       ├── sun.svg
+│   │       ├── thunderbolt.svg
+│   │       ├── visuals.svg
+│   │       ├── warning.svg
+│   │       └── waves.svg
+│   ├── liric.png
+│   ├── manifest.json
+│   ├── screenshot
+│   │   ├── narrow.png
+│   │   └── wide.png
+│   ├── serviceWorker
+│   │   ├── sw.js
+│   │   └── workbox-9b4d2a02.js
+│   ├── SF-Pro-Display-Bold.otf
+│   ├── SF-Pro-Display-Regular.otf
+│   └── SF-Pro-Display-Semibold.otf
+├── README.md
+├── run-desktop.bat
+├── run-desktop.ps1
+├── scratch
+│   ├── apply_theme_and_layout_fixes.js
+│   ├── extract_paths.js
+│   ├── find_name.js
+│   ├── fix_category_spacing_and_glass_settings.js
+│   ├── move_hooks_above_return.js
+│   ├── polish_category_tabs.js
+│   ├── test_proc.js
+│   ├── test_timeline.ps1
+│   ├── update_apple_music_css.js
+│   ├── update_app_tsx.js
+│   ├── update_css.js
+│   ├── update_index.js
+│   ├── update_kiosk_ps1.js
+│   ├── update_modal_css.js
+│   ├── update_modal.js
+│   ├── update_modal_sources.js
+│   ├── update_modal_theme.js
+│   ├── update_modal_tsx.js
+│   ├── update_readme_glass.js
+│   ├── update_readme.js
+│   └── update_styles.js
+├── scripts
+│   ├── append_apple_music_styles.js
+│   ├── apply_all_fixes.js
+│   ├── create_shortcut.ps1
+│   ├── fix_div.py
+│   ├── fix_end.py
+│   ├── fix_palette_vars.js
+│   ├── fix_songkey.js
+│   ├── fix_types.js
+│   ├── fix_webkit_css.js
+│   ├── inspect_smtc.ps1
+│   ├── patch_css.js
+│   ├── patch_index.js
+│   ├── patch_index_lyrics.js
+│   ├── patch_lyrics_blend.js
+│   ├── patch_modal.js
+│   ├── patch_modal_m3.js
+│   ├── patch_modal_rows.js
+│   ├── patch_palette.js
+│   ├── patch_perf_freeze.js
+│   ├── patch_run_desktop.js
+│   ├── patch_settings_modal.js
+│   ├── patch_settings_redesign.js
+│   ├── patch_styles.js
+│   ├── test_sessions.ps1
+│   ├── update_header.js
+│   ├── update_lyrics_settings.js
+│   ├── update_modal_lyrics.js
+│   ├── update_modal.py
+│   ├── update_studio2.py
+│   └── update_studio.py
+├── src-tauri
+│   ├── build.rs
+│   ├── Cargo.lock
+│   ├── Cargo.toml
+│   ├── gen
+│   │   └── schemas
+│   │       ├── acl-manifests.json
+│   │       ├── capabilities.json
+│   │       ├── desktop-schema.json
+│   │       └── linux-schema.json
+│   ├── hq_cache.db
+│   ├── icons
+│   │   ├── 128x128@2x.png
+│   │   ├── 128x128.png
+│   │   ├── 32x32.png
+│   │   ├── icon.icns
+│   │   ├── icon.ico
+│   │   └── icon.png
+│   ├── src
+│   │   ├── hq_music.rs
+│   │   ├── hq_proxy.rs
+│   │   ├── lib.rs
+│   │   └── main.rs
+│   ├── tauri.conf.json
+│   └── tests
+│       └── hq_music_test.rs
+├── structure.txt
+├── styles
+│   ├── AppleMusic.module.css
+│   ├── globals.css
+│   ├── Home.module.css
+│   ├── Player.module.css
+│   ├── SettingsModal.module.css
+│   ├── Signin.module.css
+│   └── SingleInstance.module.css
+├── test_liked.js
+├── test_playback.js
+├── test_seek.ps1
+├── test_smtc_control.ps1
+├── track-usage.bat
+├── track-usage.ps1
+├── tsconfig.json
+├── typings
+│   ├── LyricsSettings.ts
+│   ├── Lyrics.ts
+│   ├── Position.ts
+│   └── Song.ts
+├── update_css.js
+├── update_fonts.js
+├── update_index_sync.js
+├── update_index_ts.js
+├── update_m3.js
+├── update_modal_component.js
+├── update_modal_css.js
+├── update_modal_quit.js
+├── update_modal_slider.js
+├── update_settings_ts.js
+├── update_settings_type.js
+└── wire_toggle.js
+
+30 directories, 260 files

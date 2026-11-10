@@ -1,31 +1,41 @@
 {
-  "name": "lirics",
+  "name": "nocturne",
   "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "tauri": "tauri",
+    "lint": "next lint",
+    "backup": "bash ./backup.sh",
+    "build:release": "tauri build",
+    "kiosk": "powershell -ExecutionPolicy Bypass -File ./launch-kiosk.ps1",
+    "desktop": "tauri dev",
+    "desktop:run": "powershell -ExecutionPolicy Bypass -File ./run-desktop.ps1",
+    "desktop:build": "tauri build",
+    "stats": "cmd /c track-usage.bat"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/cli": "^2.12.4",
     "@types/spotify-web-api-node": "^5.0.11",
     "@vercel/og": "^0.6.2",
+    "concurrently": "^8.2.2",
     "next": "14.1.4",
     "next-auth": "^4.24.7",
     "next-pwa": "^5.6.0",
     "react": "^18",
     "react-dom": "^18",
     "react-screen-wake-lock": "^3.0.2",
-    "concurrently": "^8.2.2",
     "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.1.4"
+    "eslint-config-next": "14.1.4",
+    "typescript": "^5"
   }
 }

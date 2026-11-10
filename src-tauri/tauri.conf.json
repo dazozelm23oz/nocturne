@@ -1,0 +1,42 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Nocturne",
+  "version": "1.1.0",
+  "identifier": "com.nocturne.desktop",
+  "build": {
+    "frontendDist": "../out",
+    "devUrl": "http://127.0.0.1:3000"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Nocturne — Apple Music Lyrics",
+        "width": 1080,
+        "height": 760,
+        "minWidth": 480,
+        "minHeight": 400,
+        "resizable": true,
+        "fullscreen": true,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "theme": "Dark"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {}
+}

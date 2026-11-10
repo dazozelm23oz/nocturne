@@ -6,6 +6,7 @@ import { Hind_Madurai, Noto_Sans } from "next/font/google";
 import Head from "next/head";
 import { useEffect } from "react";
 import Providers from "@/providers";
+import SingleInstanceGuard from "@/components/SingleInstanceGuard";
 
 const tamil = Hind_Madurai({
   fallback: ["sans-serif"],
@@ -40,10 +41,10 @@ export default function App({
       <Head>
         <link rel="manifest" href="/manifest.json" />
 
-        <meta name="application-name" content="lirics." />
+        <meta name="application-name" content="Nocturne" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="lirics." />
+        <meta name="apple-mobile-web-app-title" content="Nocturne" />
         <meta
           name="description"
           content="Spotify lyrics didnt work so i took things into my own hands lol. A fun project."
@@ -52,8 +53,8 @@ export default function App({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-tap-highlight" content="no" />
 
-        <title>lirics.</title>
-        <meta name="title" content="lirics." />
+        <title>Nocturne</title>
+        <meta name="title" content="Nocturne" />
         <meta
           name="description"
           content="Spotify lyrics didnt work so i took things into my own hands lol. A fun project."
@@ -78,6 +79,12 @@ export default function App({
         />
 
         <link key="icon" rel="icon" href={"/favicon.svg"} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Montserrat:ital,wght@0,600;0,700;0,800;1,700&family=Nunito:ital,wght@0,700;0,800;0,900;1,800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Plus+Jakarta+Sans:ital,wght@0,600;0,700;0,800;1,700&display=swap"
+          rel="stylesheet"
+        />
       </Head>
 
       <style jsx global>
@@ -89,7 +96,9 @@ export default function App({
         `}
       </style>
       <Providers>
-        <Component {...pageProps} />
+        <SingleInstanceGuard>
+          <Component {...pageProps} />
+        </SingleInstanceGuard>
       </Providers>
     </SessionProvider>
   );
