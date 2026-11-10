@@ -308,45 +308,39 @@ impl HqBackend for SelfHostedBackend {
 
     async fn search(&self, query: &str) -> Result<Vec<HqTrack>, HqError> {
         let url = format!(
-            "http://search.kuwo.cn/r.s?all={}&ft=music&itemset=web_2013&client=kt&pn=0&rn=5&rformat=json&encoding=utf8",
+            "https://c.y.qq.com/soso/fcgi-bin/client_search_cp?p=1&n=5&w={}&format=json",
             urlencoding::encode(query)
         );
 
         let res = self.client.get(&url)
+            .header("Referer", "https://y.qq.com/")
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
             .send()
             .await
             .map_err(|e| HqError::Network(e.to_string()))?;
 
         let raw_text = res.text().await.map_err(|e| HqError::Network(e.to_string()))?;
-        println!("KUWO RAW: {}", raw_text);
+        println!("QQ MUSIC RAW: {}", raw_text);
 
-        // Kuwo rformat=json uses single quotes for keys/strings instead of double quotes
-        let sanitized_json_str = raw_text.replace('\'', "\"");
-        let json: serde_json::Value = serde_json::from_str(&sanitized_json_str)
-            .map_err(|e| HqError::ApiShape(format!("Failed to parse Kuwo search JSON: {}", e)))?;
+        let json: serde_json::Value = serde_json::from_str(&raw_text)
+            .map_err(|e| HqError::ApiShape(format!("Failed to parse QQ Music search JSON: {}", e)))?;
 
         let mut tracks = Vec::new();
-        if let Some(items) = json["abslist"].as_array() {
-            for item in items {
-                let raw_musicrid = item["MUSICRID"].as_str().unwrap_or("").to_string();
-                if raw_musicrid.is_empty() {
+        if let Some(songs) = json["data"]["song"]["list"].as_array() {
+            for song in songs {
+                let id = song["songmid"].as_str().unwrap_or("").to_string();
+                if id.is_empty() {
                     continue;
                 }
-                let clean_id = raw_musicrid.trim_start_matches("MUSIC_").to_string();
-
-                let raw_title = item["SONGNAME"].as_str().unwrap_or("Unknown");
-                let raw_artist = item["ARTIST"].as_str().unwrap_or("Unknown");
-
-                let title = decode_kuwo_html(raw_title);
-                let artist = decode_kuwo_html(raw_artist);
-
+                let title = song["songname"].as_str().unwrap_or("Unknown").to_string();
+                let artist = song["singer"][0]["name"].as_str().unwrap_or("Unknown").to_string();
                 tracks.push(HqTrack {
-                    id: clean_id,
+                    id,
                     title,
                     artist,
                     album: "".to_string(),
-                    source: "kw".to_string(),
-                    duration_seconds: item["DURATION"].as_str().and_then(|d| d.parse::<u32>().ok()),
+                    source: "tx".to_string(), // Set source to tx
+                    duration_seconds: Some(song["interval"].as_u64().unwrap_or(0) as u32),
                 });
             }
         }
@@ -372,7 +366,7 @@ impl HqBackend for SelfHostedBackend {
         };
 
         let mut last_err = HqError::NoMatch("Failed to resolve stream".to_string());
-        let effective_source = if source.is_empty() || source == "wy" { "kw" } else { source };
+        let effective_source = if source.is_empty() || source == "wy" || source == "kw" { "tx" } else { source };
 
         for current_quality in candidate_qualities {
             let quality_str = current_quality.to_lx_string();

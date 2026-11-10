@@ -171,14 +171,14 @@ fn send_mpris_command(action: String, player: Option<String>) -> Result<(), Stri
 
 #[tauri::command]
 fn seek_mpris_media(position_ms: i64, player: Option<String>) -> Result<(), String> {
-    let pos_str = format!("{}us", position_ms * 1000);
+    let pos_secs = position_ms as f64 / 1000.0;
     let mut cmd = std::process::Command::new("playerctl");
     if let Some(ref p) = player {
         if !p.is_empty() && p != "auto" {
             cmd.arg(format!("--player={}", p));
         }
     }
-    cmd.args(["position", &pos_str]);
+    cmd.args(["position", &pos_secs.to_string()]);
 
     let status = cmd.status().map_err(|e| e.to_string())?;
     if status.success() {

@@ -517,8 +517,14 @@ export default function AppleMusicSettingsModal({
   useEffect(() => {
     if (paletteColors) {
       setPreviewPalette(paletteColors);
+    } else if (songImage) {
+      extractPalette(songImage, settings.paletteAlgorithm || "Material You (M3)")
+        .then((pal) => {
+          if (pal) setPreviewPalette(pal);
+        })
+        .catch(() => {});
     }
-  }, [paletteColors]);
+  }, [paletteColors, songImage, settings.paletteAlgorithm]);
 
   // Keyboard shortcut: Esc to close
   useEffect(() => {

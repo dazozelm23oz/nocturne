@@ -91,6 +91,25 @@ export async function getLocalMedia(targetPlayer?: string): Promise<LocalMediaTr
     // Strip platform noise from rawTitle first so it doesn't pollute splitting
     let workingTitle = stripPlatformSuffixes(rawTitle);
 
+    // If the status is "Paused", and the workingTitle is exactly "YouTube Music" or matches random ad titles,
+    // do NOT update the title/artist. Return the previously cached lastSmtcResult so the screen stays frozen on the actual song.
+    const isPaused = (cleanStatus || "").toLowerCase() === "paused";
+    const isGenericOrAd =
+      !workingTitle ||
+      /^(?:youtube(?:\s*music)?|spotify|advertisement|audio\s*ad|beatmasters(?:\s*vol\s*\d+)?)$/i.test(workingTitle.trim());
+
+    if (isPaused && isGenericOrAd && lastSmtcResult) {
+      return {
+        source: "mpris",
+        title: lastSmtcResult.item?.name || workingTitle,
+        artist: lastSmtcResult.item?.artists?.[0]?.name || "Unknown Artist",
+        album: lastSmtcResult.item?.album?.name || "",
+        status: "Paused" as any,
+        positionMs: lastSmtcResult.progress_ms || 0,
+        durationMs: lastSmtcResult.item?.duration_ms || 180000,
+      };
+    }
+
     // If artist is empty, platform branding, or Unknown Artist, split title by hyphens or pipes
     if (!rawArtist || /^(?:unknown(?:\s*artist)?|youtube(?:\s*music)?|spotify|topic)$/i.test(rawArtist)) {
       if (/[-–—]/.test(workingTitle)) {
