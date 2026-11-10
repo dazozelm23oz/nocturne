@@ -311,6 +311,19 @@ export function SongProvider({ children }: { children: ReactNode }) {
     playbackData.timestamp = now;
     setData(playbackData);
     const currentSong = songRef.current;
+    const itemName = (item.name || "").trim().toLowerCase();
+    const isGenericOrAd =
+      !itemName ||
+      itemName === "youtube music" ||
+      itemName === "spotify" ||
+      itemName === "advertisement" ||
+      itemName === "audio ad";
+
+    // If the new title is "YouTube Music" or generic ad but we already have a valid song, hold previous state
+    if (isGenericOrAd && currentSong && currentSong.name && currentSong.name.toLowerCase() !== "youtube music") {
+      return;
+    }
+
     if (!currentSong || currentSong?.uri !== item.uri) {
       if (currentSong && currentSong.uri && currentSong.uri !== item.uri) {
         setHistory((prev) =>

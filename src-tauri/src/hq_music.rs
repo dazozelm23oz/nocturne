@@ -288,9 +288,17 @@ struct LxMusicUrlData {
     pub quality_type: Option<String>,
 }
 
-fn decode_kuwo_html(s: &str) -> String {
+fn decode_html_entities(s: &str) -> String {
     s.replace("&nbsp;", " ")
      .replace("&apos;", "'")
+     .replace("&#39;", "'")
+     .replace("&#039;", "'")
+     .replace("&#40;", "(")
+     .replace("&#040;", "(")
+     .replace("&#41;", ")")
+     .replace("&#041;", ")")
+     .replace("&#46;", ".")
+     .replace("&#046;", ".")
      .replace("&quot;", "\"")
      .replace("&amp;", "&")
      .replace("&lt;", "<")
@@ -332,8 +340,11 @@ impl HqBackend for SelfHostedBackend {
                 if id.is_empty() {
                     continue;
                 }
-                let title = song["songname"].as_str().unwrap_or("Unknown").to_string();
-                let artist = song["singer"][0]["name"].as_str().unwrap_or("Unknown").to_string();
+                let raw_title = song["songname"].as_str().unwrap_or("Unknown");
+                let raw_artist = song["singer"][0]["name"].as_str().unwrap_or("Unknown");
+                let title = decode_html_entities(raw_title);
+                let artist = decode_html_entities(raw_artist);
+
                 tracks.push(HqTrack {
                     id,
                     title,
@@ -366,7 +377,7 @@ impl HqBackend for SelfHostedBackend {
         };
 
         let mut last_err = HqError::NoMatch("Failed to resolve stream".to_string());
-        let effective_source = if source.is_empty() || source == "wy" || source == "kw" { "tx" } else { source };
+        let effective_source = if source.is_empty() || source == "wy" || source == "kw" || source == "tx" { "kg" } else { source };
 
         for current_quality in candidate_qualities {
             let quality_str = current_quality.to_lx_string();

@@ -46,8 +46,14 @@ export async function getLocalMedia(targetPlayer?: string): Promise<LocalMediaTr
     const posStr = parts[parts.length - 2] || "0";
     const status = parts[parts.length - 3] || "Playing";
 
-    // If MPRIS status is Stopped or empty, treat as not playing / null
     const cleanStatus = (status || "").trim().toLowerCase();
+
+    // If the player is paused, seeking, or buffering, and it reports "YouTube Music" as the title, do not update the state.
+    if ((cleanStatus === "paused" || cleanStatus === "buffering") && output.toLowerCase().includes("youtube music")) {
+      return lastSmtcResult ? lastSmtcResult.item : null;
+    }
+
+    // If MPRIS status is Stopped or empty, treat as not playing / null
     if (!cleanStatus || cleanStatus === "stopped") {
       lastSmtcResult = null;
       lastTrackId = null;
