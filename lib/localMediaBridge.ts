@@ -141,7 +141,13 @@ export async function getLocalMedia(targetPlayer?: string): Promise<LocalMediaTr
     if (!artist && rawArtist && !/^(?:youtube(?:\s*music)?|spotify|topic)$/i.test(rawArtist.trim())) {
       artist = cleanTrackTitle(rawArtist);
     }
-    if (!artist) artist = "Unknown Artist";
+    if (!artist || /^(?:unknown(?:\s*artist)?|youtube(?:\s*music)?|spotify|topic)$/i.test(artist.trim())) {
+      const stripped = (workingTitle || title || rawTitle)
+        .replace(/\s*(\((?:feat\.?|ft\.?).*?\)|\b(?:feat\.?|ft\.?)\b.*|[-–—|].*)$/i, "")
+        .trim();
+      title = stripped || title;
+      artist = "Unknown Artist"; // Do not copy title into artist
+    }
 
     if (!title) return null;
 

@@ -89,12 +89,12 @@ export function sanitizeTrackForSearch(
     }
   } else if (!artist) {
     // If the title is just "U Werent Here I Really Miss You" with no hyphen,
-    // strip any text after words like "(feat.", "-", or "|". Pass the stripped title as BOTH title and artist.
-    const stripped = title
+    // strip any text after words like "(feat.", "-", or "|".
+    const stripped = (title || rawTitle)
       .replace(/\s*(\((?:feat\.?|ft\.?).*?\)|\b(?:feat\.?|ft\.?)\b.*|[-–—|].*)$/i, "")
       .trim();
     title = stripped || title;
-    artist = stripped || title;
+    artist = "Unknown Artist"; // Do not copy title into artist
   }
 
   // Strip out anything in parentheses or brackets: (Lyrics), (Official Video), (From 'Movie'), etc.

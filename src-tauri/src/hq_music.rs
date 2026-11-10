@@ -316,42 +316,34 @@ impl HqBackend for SelfHostedBackend {
 
     async fn search(&self, query: &str) -> Result<Vec<HqTrack>, HqError> {
         let url = format!(
-            "https://c.y.qq.com/soso/fcgi-bin/client_search_cp?p=1&n=5&w={}&format=json",
+            "http://mobilecdn.kugou.com/api/v3/search/song?keyword={}&page=1&pagesize=5",
             urlencoding::encode(query)
         );
 
         let res = self.client.get(&url)
-            .header("Referer", "https://y.qq.com/")
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
             .send()
             .await
             .map_err(|e| HqError::Network(e.to_string()))?;
 
-        let raw_text = res.text().await.map_err(|e| HqError::Network(e.to_string()))?;
-        println!("QQ MUSIC RAW: {}", raw_text);
-
-        let json: serde_json::Value = serde_json::from_str(&raw_text)
-            .map_err(|e| HqError::ApiShape(format!("Failed to parse QQ Music search JSON: {}", e)))?;
+        let json: serde_json::Value = res.json().await.map_err(|e| HqError::ApiShape(e.to_string()))?;
+        println!("KUGOU RAW: {:?}", json);
 
         let mut tracks = Vec::new();
-        if let Some(songs) = json["data"]["song"]["list"].as_array() {
-            for song in songs {
-                let id = song["songmid"].as_str().unwrap_or("").to_string();
-                if id.is_empty() {
-                    continue;
-                }
-                let raw_title = song["songname"].as_str().unwrap_or("Unknown");
-                let raw_artist = song["singer"][0]["name"].as_str().unwrap_or("Unknown");
-                let title = decode_html_entities(raw_title);
-                let artist = decode_html_entities(raw_artist);
+        if let Some(items) = json["data"]["info"].as_array() {
+            for item in items {
+                let hash = item["hash"].as_str().unwrap_or("").to_string();
+                if hash.is_empty() { continue; }
+
+                let raw_title = item["songname"].as_str().unwrap_or("Unknown");
+                let raw_artist = item["singername"].as_str().unwrap_or("Unknown");
 
                 tracks.push(HqTrack {
-                    id,
-                    title,
-                    artist,
+                    id: hash,
+                    title: decode_html_entities(raw_title),
+                    artist: decode_html_entities(raw_artist),
                     album: "".to_string(),
-                    source: "tx".to_string(), // Set source to tx
-                    duration_seconds: Some(song["interval"].as_u64().unwrap_or(0) as u32),
+                    source: "kg".to_string(),
+                    duration_seconds: item["duration"].as_u64().map(|d| d as u32),
                 });
             }
         }
