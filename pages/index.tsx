@@ -418,15 +418,18 @@ export default function Home() {
 
   const qualityBadgeLabel = useMemo(() => {
     if (isHqActive) {
+      if (hqPlayback?.resolvedSource === "python") {
+        return "YT Native";
+      }
       const q = (resolvedQuality || "").toLowerCase();
-      if (q.includes("24bit") || q.includes("hires")) return "HQ Audio: FLAC";
-      if (q.includes("flac") || q.includes("lossless")) return "HQ Audio: FLAC";
-      if (q.includes("320") || q.includes("high")) return "HQ Audio: 320k";
-      if (q.includes("128") || q.includes("standard")) return "HQ Audio: 128k";
-      return `HQ Audio: ${resolvedQuality?.toUpperCase() || "FLAC"}`;
+      if (q.includes("24bit") || q.includes("hires")) return "Hi-Res FLAC";
+      if (q.includes("flac") || q.includes("lossless")) return "FLAC";
+      if (q.includes("320") || q.includes("high")) return "320k";
+      if (q.includes("128") || q.includes("standard")) return "128k";
+      return resolvedQuality?.toUpperCase() || "FLAC";
     }
-    return "Fallback: YouTube Music";
-  }, [isHqActive, resolvedQuality]);
+    return "YouTube Music";
+  }, [isHqActive, resolvedQuality, hqPlayback?.resolvedSource]);
   const lyric = useLyrics();
   const premium = usePremium();
   const refetchSong = useRefetchSong();
@@ -1188,9 +1191,17 @@ export default function Home() {
     gap: 6,
     padding: "5px 10px",
     borderRadius: 9999,
-    background: isHqActive ? "rgba(29, 185, 84, 0.22)" : "rgba(255, 255, 255, 0.12)",
-    border: `1px solid ${isHqActive ? "rgba(29, 185, 84, 0.45)" : "rgba(255, 255, 255, 0.18)"}`,
-    color: isHqActive ? "#1ed760" : "rgba(255, 255, 255, 0.85)",
+    background: isHqActive
+      ? (hqPlayback?.resolvedSource === "python" ? "rgba(59, 130, 246, 0.22)" : "rgba(29, 185, 84, 0.22)")
+      : "rgba(255, 255, 255, 0.12)",
+    border: `1px solid ${
+      isHqActive
+        ? (hqPlayback?.resolvedSource === "python" ? "rgba(59, 130, 246, 0.45)" : "rgba(29, 185, 84, 0.45)")
+        : "rgba(255, 255, 255, 0.18)"
+    }`,
+    color: isHqActive
+      ? (hqPlayback?.resolvedSource === "python" ? "#60a5fa" : "#1ed760")
+      : "rgba(255, 255, 255, 0.85)",
     fontSize: 11.5,
     fontWeight: 650,
     letterSpacing: "0.03em",
@@ -1199,9 +1210,15 @@ export default function Home() {
 >
   <span
     style={{
-      width: 6, height: 6, borderRadius: "50%",
-      background: isHqActive ? "#1ed760" : "#ff0033",
-      boxShadow: isHqActive ? "0 0 8px #1ed760" : "0 0 6px #ff0033",
+      width: 6,
+      height: 6,
+      borderRadius: "50%",
+      background: isHqActive 
+        ? (hqPlayback?.resolvedSource === "python" ? "#3b82f6" : "#1ed760") 
+        : "#ff0033",
+      boxShadow: isHqActive 
+        ? (hqPlayback?.resolvedSource === "python" ? "0 0 8px #3b82f6" : "0 0 8px #1ed760") 
+        : "0 0 6px #ff0033",
     }}
   />
   <span>{isHqActive ? qualityBadgeLabel : "YouTube Music"}</span>

@@ -1,0 +1,35 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@deno/installer-shell-setup@*": "0.3.4"
+  },
+  "jsr": {
+    "@deno/installer-shell-setup@0.3.4": {
+      "integrity": "48665d1a737d487cce6874bc97bba70a5aeffa7053aca3f60df93c6fab8963b4"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@tauri-apps/api@^2.12.4",
+        "npm:@tauri-apps/cli@^2.12.4",
+        "npm:@types/node@20",
+        "npm:@types/react-dom@18",
+        "npm:@types/react@18",
+        "npm:@types/spotify-web-api-node@^5.0.11",
+        "npm:@vercel/og@~0.6.2",
+        "npm:concurrently@^8.2.2",
+        "npm:eslint-config-next@14.1.4",
+        "npm:eslint@8",
+        "npm:next-auth@^4.24.7",
+        "npm:next-pwa@^5.6.0",
+        "npm:next@14.1.4",
+        "npm:react-dom@18",
+        "npm:react-screen-wake-lock@^3.0.2",
+        "npm:react@18",
+        "npm:spotify-web-api-node@^5.0.2",
+        "npm:typescript@5"
+      ]
+    }
+  }
+}
