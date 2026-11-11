@@ -61,6 +61,10 @@ pub struct HqStream {
     pub bitrate_kbps: Option<u32>,
     pub format: Option<String>,
     pub ttl_seconds: Option<u64>,
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub artist: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -195,8 +199,8 @@ impl HqBackend for TuneHubBackend {
         &self,
         source: &str,
         track_id: &str,
-        _track_title: &str,
-        _track_artist: &str,
+        track_title: &str,
+        track_artist: &str,
         _requested_quality: Quality,
     ) -> Result<HqStream, HqError> {
         let url = format!(
@@ -240,6 +244,8 @@ impl HqBackend for TuneHubBackend {
             bitrate_kbps: data.br,
             format: data.format,
             ttl_seconds: Some(1200), // TuneHub streams typically expire within 20 mins
+            title: Some(track_title.to_string()),
+            artist: Some(track_artist.to_string()),
         })
     }
 }
@@ -268,10 +274,6 @@ impl PythonBackend {
     }
 }
 
-#[derive(Deserialize, Debug)]
-struct PythonResolveResponse {
-    pub url: Option<String>,
-}
 
 #[async_trait]
 impl HqBackend for PythonBackend {
@@ -316,12 +318,16 @@ impl HqBackend for PythonBackend {
             .await
             .map_err(|e| HqError::Network(e.to_string()))?;
 
-        let body: PythonResolveResponse = res.json().await
+        let json: serde_json::Value = res.json().await
             .map_err(|e| HqError::ApiShape(format!("Failed to parse Python resolve JSON: {}", e)))?;
 
-        let stream_url = body.url.ok_or_else(|| {
-            HqError::NoMatch(format!("No stream URL returned for '{}' by '{}'", track_title, track_artist))
-        })?;
+        let stream_url = json["url"].as_str().unwrap_or("").to_string();
+        if stream_url.is_empty() {
+            return Err(HqError::NoMatch(format!("No stream URL returned for '{}' by '{}'", track_title, track_artist)));
+        }
+
+        let resolved_artist = json["artist"].as_str().filter(|s| !s.trim().is_empty()).unwrap_or(track_artist).to_string();
+        let resolved_title = json["title"].as_str().filter(|s| !s.trim().is_empty()).unwrap_or(track_title).to_string();
 
         let resolved_quality = if requested_quality == Quality::Unknown {
             Quality::High
@@ -336,6 +342,8 @@ impl HqBackend for PythonBackend {
             bitrate_kbps: Some(320),
             format: Some("mp3".to_string()),
             ttl_seconds: Some(3600),
+            title: Some(resolved_title),
+            artist: Some(resolved_artist),
         };
 
         Ok(stream)

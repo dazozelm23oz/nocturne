@@ -309,7 +309,11 @@ export function useHqPlayback(
             ...prev,
             isActive: true,
             isPlaying: true,
-            track,
+            track: {
+              ...track,
+              title: streamResult.title || track.title,
+              artist: streamResult.artist || track.artist,
+            },
             resolvedQuality: streamResult.quality,
             resolvedSource: streamResult.source,
             sourceLabel: sourceTag,

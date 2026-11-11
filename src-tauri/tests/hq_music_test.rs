@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use nocturne::hq_music::{HqBackend, HqError, HqManager, HqStream, HqTrack, Quality, TuneHubBackend};
+use app_lib::hq_music::{HqBackend, HqError, HqManager, HqStream, HqTrack, Quality, TuneHubBackend};
 use std::sync::Arc;
 
 struct MockSuccessBackend;
@@ -36,6 +36,8 @@ impl HqBackend for MockSuccessBackend {
             bitrate_kbps: Some(960),
             format: Some("flac".to_string()),
             ttl_seconds: Some(1200),
+            title: None,
+            artist: None,
         })
     }
 }
@@ -74,6 +76,8 @@ impl HqBackend for MockDowngradeBackend {
             bitrate_kbps: Some(320),
             format: Some("mp3".to_string()),
             ttl_seconds: Some(1200),
+            title: None,
+            artist: None,
         };
 
         Err(HqError::QualityDowngraded {

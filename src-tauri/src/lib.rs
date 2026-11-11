@@ -1,4 +1,4 @@
-mod hq_music;
+pub mod hq_music;
 mod hq_proxy;
 
 use std::sync::Arc;
