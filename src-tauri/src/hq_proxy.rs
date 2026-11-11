@@ -101,8 +101,9 @@ Access-Control-Max-Age: 86400\r\n\r\n";
     }
 
     let mut upstream_req = client.get(&target_url)
-        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-        .header("Referer", "https://www.kuwo.cn/");
+        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .header("Referer", "https://www.kugou.com/")
+        .header("Cookie", "kg_mid=2333; kg_dfid=0"); // Faking a device ID to bypass bot check
 
     if let Some(ref range) = range_header {
         upstream_req = upstream_req.header("Range", range);

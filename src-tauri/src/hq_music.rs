@@ -493,7 +493,10 @@ async fn execute_with_retry(
 
     loop {
         attempts += 1;
-        let mut req = client.get(url);
+        let mut req = client.get(url)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+            .header("Referer", "https://www.kugou.com/")
+            .header("Cookie", "kg_mid=2333; kg_dfid=0");
         if let Some(key) = api_key {
             req = req.header("X-Request-Key", key);
         }
