@@ -219,7 +219,7 @@ pub fn run() {
     let hq_manager = if hq_enabled {
         let backend: Arc<dyn hq_music::HqBackend + Send + Sync> = match backend_mode.as_str() {
             "tunehub" => Arc::new(hq_music::TuneHubBackend::new()),
-            _ => Arc::new(hq_music::SelfHostedBackend::new()),
+            _ => Arc::new(hq_music::PythonBackend::new()),
         };
         let data_dir = std::env::var("XDG_DATA_HOME")
             .map(std::path::PathBuf::from)

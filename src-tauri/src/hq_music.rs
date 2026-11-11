@@ -245,80 +245,70 @@ impl HqBackend for TuneHubBackend {
 }
 
 // ---------------------------------------------------------------------------
-// 2. SelfHostedBackend (lx-music-api-server)
-// PLAUSIBLE — route shape confirmed via README, source unverified.
+// 2. PythonBackend (Local ytmusicapi/yt-dlp daemon on port 8000)
 // ---------------------------------------------------------------------------
 
-pub struct SelfHostedBackend {
+pub struct PythonBackend {
     client: reqwest::Client,
     base_url: String,
-    api_key: Option<String>,
 }
 
-impl SelfHostedBackend {
+impl PythonBackend {
     pub fn new() -> Self {
-        let base_url = std::env::var("NOCTURNE_SELFHOSTED_URL")
-            .unwrap_or_else(|_| "http://127.0.0.1:8080".to_string());
-        let api_key = std::env::var("NOCTURNE_HQ_API_KEY").ok();
+        let base_url = std::env::var("NOCTURNE_PYTHON_URL")
+            .unwrap_or_else(|_| "http://127.0.0.1:8000".to_string());
         let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(8))
+            .timeout(Duration::from_secs(12))
             .build()
             .unwrap_or_default();
         Self {
             client,
             base_url,
-            api_key,
         }
     }
 }
 
 #[derive(Deserialize, Debug)]
-struct LxMusicUrlResponse {
-    pub code: Option<i32>,
-    pub msg: Option<String>,
-    pub message: Option<String>,
+struct PythonResolveResponse {
     pub url: Option<String>,
-    pub data: Option<LxMusicUrlData>,
-}
-
-#[derive(Deserialize, Debug)]
-struct LxMusicUrlData {
-    pub url: Option<String>,
-    #[serde(rename = "type")]
-    pub quality_type: Option<String>,
-}
-
-fn decode_html_entities(s: &str) -> String {
-    s.replace("&nbsp;", " ")
-     .replace("&apos;", "'")
-     .replace("&#39;", "'")
-     .replace("&#039;", "'")
-     .replace("&#40;", "(")
-     .replace("&#040;", "(")
-     .replace("&#41;", ")")
-     .replace("&#041;", ")")
-     .replace("&#46;", ".")
-     .replace("&#046;", ".")
-     .replace("&quot;", "\"")
-     .replace("&amp;", "&")
-     .replace("&lt;", "<")
-     .replace("&gt;", ">")
-     .replace("||", ", ")
-     .trim()
-     .to_string()
 }
 
 #[async_trait]
-impl HqBackend for SelfHostedBackend {
+impl HqBackend for PythonBackend {
     fn name(&self) -> &'static str {
-        "selfhosted"
+        "python"
     }
 
     async fn search(&self, query: &str) -> Result<Vec<HqTrack>, HqError> {
+        // Direct resolution architecture: return candidate track directly with query details.
+        // Full audio resolving and downloading is handled in the resolve step.
+        let track = HqTrack {
+            id: query.to_string(),
+            title: query.to_string(),
+            artist: "".to_string(),
+            album: "".to_string(),
+            source: "python".to_string(),
+            duration_seconds: None,
+        };
+        Ok(vec![track])
+    }
+
+    async fn resolve(
+        &self,
+        _source: &str,
+        _track_id: &str,
+        track_title: &str,
+        track_artist: &str,
+        requested_quality: Quality,
+    ) -> Result<HqStream, HqError> {
         let url = format!(
-            "http://127.0.0.1:8080/api/search/get?s={}&type=1",
-            urlencoding::encode(query)
+            "{}/resolve?title={}&artist={}",
+            self.base_url,
+            urlencoding::encode(track_title),
+            urlencoding::encode(track_artist)
         );
+
+        println!("PYTHON RESOLVE: {}", url);
 
         let res = self.client.get(&url)
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
@@ -326,43 +316,12 @@ impl HqBackend for SelfHostedBackend {
             .await
             .map_err(|e| HqError::Network(e.to_string()))?;
 
-        let json: serde_json::Value = res.json().await.map_err(|e| HqError::ApiShape(e.to_string()))?;
-        println!("UNM RAW: {:?}", json);
+        let body: PythonResolveResponse = res.json().await
+            .map_err(|e| HqError::ApiShape(format!("Failed to parse Python resolve JSON: {}", e)))?;
 
-        let mut tracks = Vec::new();
-        if let Some(items) = json["result"]["songs"].as_array() {
-            for item in items {
-                let id = item["id"].as_u64().unwrap_or(0).to_string();
-                let title = item["name"].as_str().unwrap_or("Unknown").to_string();
-                let artist = item["artists"][0]["name"].as_str().unwrap_or("Unknown").to_string();
-
-                tracks.push(HqTrack {
-                    id,
-                    title,
-                    artist,
-                    album: "".to_string(),
-                    source: "wy".to_string(), // Unblock uses NetEase IDs
-                    duration_seconds: item["duration"].as_u64().map(|d| (d / 1000) as u32),
-                });
-            }
-        }
-
-        Ok(tracks)
-    }
-
-    async fn resolve(
-        &self,
-        _source: &str,
-        track_id: &str,
-        _track_title: &str,
-        _track_artist: &str,
-        requested_quality: Quality,
-    ) -> Result<HqStream, HqError> {
-        let clean_id = track_id.trim().trim_start_matches("MUSIC_").trim();
-        let stream_url = format!(
-            "http://127.0.0.1:8080/url/{}/320k",
-            clean_id
-        );
+        let stream_url = body.url.ok_or_else(|| {
+            HqError::NoMatch(format!("No stream URL returned for '{}' by '{}'", track_title, track_artist))
+        })?;
 
         let resolved_quality = if requested_quality == Quality::Unknown {
             Quality::High
@@ -373,10 +332,10 @@ impl HqBackend for SelfHostedBackend {
         let stream = HqStream {
             url: stream_url,
             quality: resolved_quality,
-            source: "wy".to_string(),
+            source: "python".to_string(),
             bitrate_kbps: Some(320),
             format: Some("mp3".to_string()),
-            ttl_seconds: Some(1800),
+            ttl_seconds: Some(3600),
         };
 
         Ok(stream)
