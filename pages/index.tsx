@@ -1554,13 +1554,10 @@ export default function Home() {
                     <div className={styles.titleArtistCol}>
                     <div className={styles.nowPlayingKicker}>NOW PLAYING</div>
                     <div className={styles.titleRow}>
-                        <h1
-                          className={styles.trackTitle}
-                          title={isHqActive && hqPlayback.track?.title ? hqPlayback.track.title : song.name}
-                        >
-                          {isHqActive && hqPlayback.track?.title ? hqPlayback.track.title : song.name}
+                        <h1 className={styles.trackTitle}>
+                          {isHqActive && hqPlayback?.track?.title ? hqPlayback.track.title : song?.name || "Unknown Track"}
                         </h1>
-                        {song.explicit && (
+                        {song?.explicit && (
                           <span
                             className={styles.explicitBadge}
                             title="Explicit Content"
@@ -1569,11 +1566,8 @@ export default function Home() {
                           </span>
                         )}
                       </div>
-                      <h3
-                        className={styles.artistName}
-                        title={isHqActive && hqPlayback.track?.artist ? hqPlayback.track.artist : song.artist}
-                      >
-                        {isHqActive && hqPlayback.track?.artist ? hqPlayback.track.artist : song.artist}
+                      <h3 className={styles.artistName}>
+                        {isHqActive && hqPlayback?.track?.artist ? hqPlayback.track.artist : song?.artist || "Unknown Artist"}
                       </h3>
                     </div>
 

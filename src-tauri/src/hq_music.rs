@@ -361,15 +361,13 @@ impl HqBackend for SelfHostedBackend {
     ) -> Result<HqStream, HqError> {
         let clean_id = track_id.trim().trim_start_matches("MUSIC_").trim();
         let candidate_qualities: Vec<Quality> = match requested_quality {
-            Quality::HiRes => vec![Quality::HiRes, Quality::Lossless, Quality::High, Quality::Standard],
-            Quality::Lossless => vec![Quality::Lossless, Quality::High, Quality::Standard],
-            Quality::High => vec![Quality::High, Quality::Standard],
+            Quality::HiRes | Quality::Lossless | Quality::High => vec![Quality::High, Quality::Standard],
             Quality::Standard => vec![Quality::Standard],
             Quality::Unknown => vec![Quality::High, Quality::Standard],
         };
 
         let mut last_err = HqError::NoMatch("Failed to resolve stream".to_string());
-        let effective_source = if source.is_empty() || source == "wy" || source == "kw" || source == "tx" { "kg" } else { source };
+        let effective_source = if source == "kg" { "kw" } else if source.is_empty() || source == "wy" || source == "tx" { "kw" } else { source };
 
         for current_quality in candidate_qualities {
             let quality_str = current_quality.to_lx_string();
