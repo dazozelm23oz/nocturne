@@ -316,7 +316,7 @@ impl HqBackend for SelfHostedBackend {
 
     async fn search(&self, query: &str) -> Result<Vec<HqTrack>, HqError> {
         let url = format!(
-            "http://mobilecdn.kugou.com/api/v3/search/song?keyword={}&page=1&pagesize=5",
+            "http://127.0.0.1:8080/search?keywords={}",
             urlencoding::encode(query)
         );
 
@@ -326,24 +326,22 @@ impl HqBackend for SelfHostedBackend {
             .map_err(|e| HqError::Network(e.to_string()))?;
 
         let json: serde_json::Value = res.json().await.map_err(|e| HqError::ApiShape(e.to_string()))?;
-        println!("KUGOU RAW: {:?}", json);
+        println!("UNM RAW: {:?}", json);
 
         let mut tracks = Vec::new();
-        if let Some(items) = json["data"]["info"].as_array() {
+        if let Some(items) = json["result"]["songs"].as_array() {
             for item in items {
-                let hash = item["hash"].as_str().unwrap_or("").to_string();
-                if hash.is_empty() { continue; }
-
-                let raw_title = item["songname"].as_str().unwrap_or("Unknown");
-                let raw_artist = item["singername"].as_str().unwrap_or("Unknown");
+                let id = item["id"].as_u64().unwrap_or(0).to_string();
+                let title = item["name"].as_str().unwrap_or("Unknown").to_string();
+                let artist = item["artists"][0]["name"].as_str().unwrap_or("Unknown").to_string();
 
                 tracks.push(HqTrack {
-                    id: hash,
-                    title: decode_html_entities(raw_title),
-                    artist: decode_html_entities(raw_artist),
+                    id,
+                    title,
+                    artist,
                     album: "".to_string(),
-                    source: "kg".to_string(),
-                    duration_seconds: item["duration"].as_u64().map(|d| d as u32),
+                    source: "wy".to_string(), // Unblock uses NetEase IDs
+                    duration_seconds: item["duration"].as_u64().map(|d| (d / 1000) as u32),
                 });
             }
         }
@@ -353,126 +351,34 @@ impl HqBackend for SelfHostedBackend {
 
     async fn resolve(
         &self,
-        source: &str,
+        _source: &str,
         track_id: &str,
-        track_title: &str,
-        track_artist: &str,
+        _track_title: &str,
+        _track_artist: &str,
         requested_quality: Quality,
     ) -> Result<HqStream, HqError> {
         let clean_id = track_id.trim().trim_start_matches("MUSIC_").trim();
-        let candidate_qualities: Vec<Quality> = match requested_quality {
-            Quality::HiRes | Quality::Lossless | Quality::High => vec![Quality::High, Quality::Standard],
-            Quality::Standard => vec![Quality::Standard],
-            Quality::Unknown => vec![Quality::High, Quality::Standard],
+        let stream_url = format!(
+            "http://127.0.0.1:8080/url/{}/320k",
+            clean_id
+        );
+
+        let resolved_quality = if requested_quality == Quality::Unknown {
+            Quality::High
+        } else {
+            requested_quality
         };
 
-        let mut last_err = HqError::NoMatch("Failed to resolve stream".to_string());
-        let effective_source = if source == "kg" { "kw" } else if source.is_empty() || source == "wy" || source == "tx" { "kw" } else { source };
+        let stream = HqStream {
+            url: stream_url,
+            quality: resolved_quality,
+            source: "wy".to_string(),
+            bitrate_kbps: Some(320),
+            format: Some("mp3".to_string()),
+            ttl_seconds: Some(1800),
+        };
 
-        for current_quality in candidate_qualities {
-            let quality_str = current_quality.to_lx_string();
-
-            // 1. Modern query parameter format (GET /url?source=kw&songId={id}&quality={quality})
-            let query_url = format!(
-                "{}/url?source={}&songId={}&quality={}",
-                self.base_url,
-                effective_source,
-                clean_id,
-                quality_str
-            );
-
-            println!("RESOLVING: {}", clean_id);
-
-            let mut res = execute_with_retry(&self.client, &query_url, self.api_key.as_deref()).await;
-
-            // 2. If modern format returns 404, fall back to legacy path format (/url/{source}/{songInfo}/{quality})
-            if res.is_err() || res.as_ref().map(|r| r.status().as_u16()).unwrap_or(0) == 404 {
-                let song_info_json = serde_json::json!({
-                    "id": clean_id,
-                    "songmid": clean_id,
-                    "name": track_title,
-                    "singer": track_artist,
-                    "source": effective_source
-                });
-                let legacy_url = format!(
-                    "{}/url/{}/{}/{}",
-                    self.base_url,
-                    effective_source,
-                    urlencoding::encode(&song_info_json.to_string()),
-                    quality_str
-                );
-                println!("RESOLVING: {}", clean_id);
-                res = execute_with_retry(&self.client, &legacy_url, self.api_key.as_deref()).await;
-            }
-
-            let response = match res {
-                Ok(r) => r,
-                Err(e) => {
-                    println!("[HQ Downgrade] Quality {:?} failed with error: {:?}. Retrying next tier...", current_quality, e);
-                    last_err = e;
-                    continue;
-                }
-            };
-
-            let body: LxMusicUrlResponse = match response.json().await {
-                Ok(b) => b,
-                Err(e) => {
-                    println!("[HQ Downgrade] Quality {:?} JSON parse error: {:?}. Retrying next tier...", current_quality, e);
-                    last_err = HqError::ApiShape(e.to_string());
-                    continue;
-                }
-            };
-
-            let is_ok = body.code == Some(200) || body.code == Some(0);
-            let resolved_url = body.url.or_else(|| body.data.as_ref().and_then(|d| d.url.clone()));
-
-            if !is_ok || resolved_url.is_none() {
-                let err_msg = body.message
-                    .or(body.msg)
-                    .unwrap_or_else(|| format!("Quality {:?} rejected (code {:?})", current_quality, body.code));
-                println!("[HQ Downgrade] Quality {:?} unavailable on server: {}. Retrying next tier...", current_quality, err_msg);
-                last_err = HqError::NoMatch(err_msg);
-                continue;
-            }
-
-            let stream_url = resolved_url.unwrap();
-            let resolved_quality = body.data
-                .as_ref()
-                .and_then(|d| d.quality_type.as_deref())
-                .map(Quality::from_str_lenient)
-                .unwrap_or(current_quality);
-
-            let stream = HqStream {
-                url: stream_url,
-                quality: resolved_quality,
-                source: effective_source.to_string(),
-                bitrate_kbps: match resolved_quality {
-                    Quality::Standard => Some(128),
-                    Quality::High => Some(320),
-                    Quality::Lossless => Some(960),
-                    Quality::HiRes => Some(1400),
-                    Quality::Unknown => None,
-                },
-                format: match resolved_quality {
-                    Quality::Standard | Quality::High => Some("mp3".to_string()),
-                    Quality::Lossless | Quality::HiRes => Some("flac".to_string()),
-                    Quality::Unknown => None,
-                },
-                ttl_seconds: Some(1800),
-            };
-
-            if resolved_quality != requested_quality && requested_quality != Quality::Unknown {
-                return Err(HqError::QualityDowngraded {
-                    requested: requested_quality,
-                    resolved: resolved_quality,
-                    stream,
-                });
-            }
-
-            return Ok(stream);
-        }
-
-        Err(last_err)
+        Ok(stream)
     }
 }
 
