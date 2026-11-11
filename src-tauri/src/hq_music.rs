@@ -258,7 +258,7 @@ impl PythonBackend {
         let base_url = std::env::var("NOCTURNE_PYTHON_URL")
             .unwrap_or_else(|_| "http://127.0.0.1:8000".to_string());
         let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(12))
+            .timeout(Duration::from_secs(45))
             .build()
             .unwrap_or_default();
         Self {
