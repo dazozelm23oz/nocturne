@@ -1449,11 +1449,11 @@ export default function Home() {
             <div className={styles.modalBody}>
               <div className={styles.trackDetailRow}>
                 <span className={styles.trackDetailLabel}>Track Title</span>
-                <span className={styles.trackDetailVal}>{song.name}</span>
+                <span className={styles.trackDetailVal}>{isHqActive && hqPlayback?.track?.title ? hqPlayback.track.title : song.name}</span>
               </div>
               <div className={styles.trackDetailRow}>
                 <span className={styles.trackDetailLabel}>Artist</span>
-                <span className={styles.trackDetailVal}>{song.artist}</span>
+                <span className={styles.trackDetailVal}>{isHqActive && hqPlayback?.track?.artist ? hqPlayback.track.artist : song.artist}</span>
               </div>
               <div className={styles.trackDetailRow}>
                 <span className={styles.trackDetailLabel}>Album</span>

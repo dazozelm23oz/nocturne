@@ -120,7 +120,7 @@ impl TuneHubBackend {
         let base_url = std::env::var("NOCTURNE_TUNEHUB_URL")
             .unwrap_or_else(|_| "https://api.tunefree.fun".to_string());
         let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(8))
+            .timeout(Duration::from_secs(45))
             .build()
             .unwrap_or_default();
         Self { client, base_url }
