@@ -316,11 +316,12 @@ impl HqBackend for SelfHostedBackend {
 
     async fn search(&self, query: &str) -> Result<Vec<HqTrack>, HqError> {
         let url = format!(
-            "http://127.0.0.1:8080/search?keywords={}",
+            "http://127.0.0.1:8080/api/search/get?s={}&type=1",
             urlencoding::encode(query)
         );
 
         let res = self.client.get(&url)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
             .send()
             .await
             .map_err(|e| HqError::Network(e.to_string()))?;
