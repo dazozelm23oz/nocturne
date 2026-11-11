@@ -1583,8 +1583,17 @@ export default function Home() {
                           </span>
                         )}
                       </div>
-                      <h3 className={styles.artistName}>
-                        {isHqActive && hqPlayback?.track?.artist ? hqPlayback.track.artist : song?.artist || "Unknown Artist"}
+                      <h3
+                        className={styles.artistName}
+                        title={
+                          isHqActive && hqPlayback?.track?.artist
+                            ? hqPlayback.track.artist
+                            : song?.artist || "Unknown Artist"
+                        }
+                      >
+                        {isHqActive && hqPlayback?.track?.artist
+                          ? hqPlayback.track.artist
+                          : song?.artist || "Unknown Artist"}
                       </h3>
                     </div>
 
