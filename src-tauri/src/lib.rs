@@ -128,11 +128,36 @@ fn get_mpris_active_players() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 fn get_mpris_playback_state(player: Option<String>) -> Result<String, String> {
-    let mut cmd = std::process::Command::new("playerctl");
-    if let Some(ref p) = player {
-        if !p.is_empty() && p != "auto" {
-            cmd.arg(format!("--player={}", p));
+    let selected_player: Option<String> = match player.as_deref() {
+        Some(p) if !p.trim().is_empty() && p.trim() != "auto" => Some(p.trim().to_string()),
+        _ => {
+            let players = get_mpris_active_players().unwrap_or_default();
+            if players.is_empty() {
+                None
+            } else {
+                let mut playing_player = None;
+                for p in &players {
+                    let status_out = std::process::Command::new("playerctl")
+                        .arg(format!("--player={}", p))
+                        .args(["metadata", "--format", "{{status}}"])
+                        .output();
+                    if let Ok(out) = status_out {
+                        let status_str = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                        if status_str.eq_ignore_ascii_case("playing") {
+                            playing_player = Some(p.clone());
+                            break;
+                        }
+                    }
+                }
+                // Only if NO player is "Playing", fall back to the first player in the list.
+                Some(playing_player.unwrap_or_else(|| players[0].clone()))
+            }
         }
+    };
+
+    let mut cmd = std::process::Command::new("playerctl");
+    if let Some(ref p) = selected_player {
+        cmd.arg(format!("--player={}", p));
     }
     cmd.args(["metadata", "--format", "{{title}}|{{artist}}|{{status}}|{{position}}|{{mpris:length}}"]);
 

@@ -135,18 +135,18 @@ export async function getLocalMedia(targetPlayer?: string): Promise<LocalMediaTr
 
     // Clean platform pollution & parentheticals (e.g. "(Official Music Video)")
     const sanitized = sanitizeTrackForSearch(workingTitle, rawArtist);
-    let title = sanitized.title || cleanTrackTitle(workingTitle) || workingTitle || rawTitle;
+    let title = stripPlatformSuffixes(sanitized.title || cleanTrackTitle(workingTitle) || workingTitle || rawTitle);
     
     let artist = sanitized.artist;
     if (!artist && rawArtist && !/^(?:youtube(?:\s*music)?|spotify|topic)$/i.test(rawArtist.trim())) {
       artist = cleanTrackTitle(rawArtist);
     }
-    if (!artist || /^(?:unknown(?:\s*artist)?|youtube(?:\s*music)?|spotify|topic)$/i.test(artist.trim())) {
+    if (!artist || !artist.trim() || /^(?:unknown(?:\s*artist)?|youtube(?:\s*music)?|spotify|topic)$/i.test(artist.trim())) {
       const stripped = (workingTitle || title || rawTitle)
         .replace(/\s*(\((?:feat\.?|ft\.?).*?\)|\b(?:feat\.?|ft\.?)\b.*|[-–—|].*)$/i, "")
         .trim();
-      title = stripped || title;
-      artist = "Unknown Artist"; // Do not copy title into artist
+      title = stripPlatformSuffixes(stripped || title);
+      artist = title; // If the artist is empty, pass the title as the fallback artist
     }
 
     if (!title) return null;
