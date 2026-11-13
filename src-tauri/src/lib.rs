@@ -135,8 +135,13 @@ async fn send_soloist_command(action: String, port: Option<u16>) -> Result<(), S
 }
 
 #[tauri::command]
-fn import_simpmusic_db(file_path: String) -> Result<analytics::AnalyticsSummary, String> {
+fn import_simpmusic_db(file_path: String) -> Result<Vec<analytics::AnalyticsRecord>, String> {
     analytics::import_simpmusic_database(&file_path)
+}
+
+#[tauri::command]
+fn clear_analytics_data() -> Result<(), String> {
+    analytics::clear_analytics()
 }
 
 #[tauri::command]
@@ -205,6 +210,7 @@ pub fn run() {
             send_soloist_command,
             import_simpmusic_db,
             get_analytics_data,
+            clear_analytics_data,
             get_real_gpu
         ])
         .setup(move |_app| {

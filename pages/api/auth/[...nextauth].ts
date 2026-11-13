@@ -101,6 +101,7 @@ export default NextAuth({
       if (token.user) {
         session.user = token.user as User;
       }
+      (session as any).accessToken = token.access_token;
       return session;
     },
     async signIn({ user, account, profile }) {

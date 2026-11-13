@@ -1,4 +1,5 @@
-import React from "react";
+/* eslint-disable @next/next/no-img-element */
+import React, { useState } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2 } from "lucide-react";
 import { usePlayer } from "@/context/PlayerContext";
 
@@ -13,9 +14,59 @@ function formatTime(seconds: number): string {
   return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
+const ImageWithFallback: React.FC<{
+  src?: string;
+  alt: string;
+  fallbackText: string;
+  style?: React.CSSProperties;
+}> = ({ src, alt, fallbackText, style }) => {
+  const [error, setError] = useState(!src);
+
+  if (error || !src) {
+    const char = fallbackText.trim().charAt(0).toUpperCase() || "🎵";
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #1e293b, #334155)",
+          color: "#ffffff",
+          fontWeight: 700,
+          fontSize: 18,
+          userSelect: "none",
+          ...style,
+        }}
+      >
+        {char}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setError(true)}
+      style={{ objectFit: "cover", ...style }}
+    />
+  );
+};
+
 export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
-  const { currentTrack, isPlaying, progress, duration, volume, isResolving, togglePlay, seek, setVolume, playNextTrack, playPrevTrack } =
-    usePlayer();
+  const {
+    currentTrack,
+    isPlaying,
+    progress,
+    duration,
+    volume,
+    isResolving,
+    togglePlay,
+    seek,
+    setVolume,
+    playNextTrack,
+    playPrevTrack,
+  } = usePlayer();
 
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     seek(parseFloat(e.target.value));
@@ -28,15 +79,18 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
   return (
     <footer
       style={{
-        height: 76,
-        padding: "0 20px",
-        background: "var(--player-bg, #0f1217)",
-        borderTop: "1px solid var(--border-color, rgba(255,255,255,0.08))",
+        height: 78,
+        padding: "0 24px",
+        background: "rgba(20, 20, 25, 0.7)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderTop: "1px solid rgba(255, 255, 255, 0.1)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         userSelect: "none",
-        zIndex: 20,
+        zIndex: 40,
+        position: "relative",
       }}
     >
       {/* Left: Track Information & Album Art thumbnail */}
@@ -51,32 +105,20 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
             borderRadius: 8,
             overflow: "hidden",
             cursor: "pointer",
-            background: "var(--bg-surface, #1a1f26)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            background: "rgba(255, 255, 255, 0.05)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
             flexShrink: 0,
+            transition: "transform 0.2s ease",
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
-          {currentTrack?.coverArt ? (
-            <img
-              src={currentTrack.coverArt}
-              alt="Art"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 20,
-                background: "linear-gradient(135deg, var(--accent-primary, #e11d48), #3b82f6)",
-              }}
-            >
-              🎵
-            </div>
-          )}
+          <ImageWithFallback
+            src={currentTrack?.coverArt}
+            alt={currentTrack?.title || "Track art"}
+            fallbackText={currentTrack?.title || "Music"}
+            style={{ width: "100%", height: "100%" }}
+          />
           <div
             style={{
               position: "absolute",
@@ -86,7 +128,7 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "opacity 0.15s ease",
+              transition: "opacity 0.2s ease",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
@@ -101,7 +143,7 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: "var(--text-primary, #ffffff)",
+              color: "#ffffff",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -113,7 +155,7 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
           <div
             style={{
               fontSize: 12,
-              color: "var(--text-secondary, #9ca3af)",
+              color: "#94a3b8",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -142,10 +184,17 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
             style={{
               background: "transparent",
               border: "none",
-              color: "var(--text-secondary, #9ca3af)",
-              cursor: "pointer",
+              color: currentTrack ? "#cbd5e1" : "#475569",
+              cursor: currentTrack ? "pointer" : "default",
               display: "flex",
               alignItems: "center",
+              transition: "transform 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (currentTrack) e.currentTarget.style.transform = "scale(1.1)";
+            }}
+            onMouseLeave={(e) => {
+              if (currentTrack) e.currentTarget.style.transform = "scale(1)";
             }}
           >
             <SkipBack size={18} />
@@ -155,21 +204,25 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
             onClick={togglePlay}
             disabled={!currentTrack || isResolving}
             style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: "50%",
               background: "var(--accent-primary, #e11d48)",
               border: "none",
               color: "#ffffff",
-              cursor: "pointer",
+              cursor: currentTrack ? "pointer" : "default",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 2px 10px rgba(225, 29, 72, 0.4)",
-              transition: "transform 0.1s ease",
+              boxShadow: "0 4px 14px rgba(225, 29, 72, 0.4)",
+              transition: "transform 0.15s ease",
             }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
-            onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            onMouseEnter={(e) => {
+              if (currentTrack) e.currentTarget.style.transform = "scale(1.08)";
+            }}
+            onMouseLeave={(e) => {
+              if (currentTrack) e.currentTarget.style.transform = "scale(1)";
+            }}
           >
             {isResolving ? (
               <span style={{ fontSize: 10 }}>...</span>
@@ -186,10 +239,17 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
             style={{
               background: "transparent",
               border: "none",
-              color: "var(--text-secondary, #9ca3af)",
-              cursor: "pointer",
+              color: currentTrack ? "#cbd5e1" : "#475569",
+              cursor: currentTrack ? "pointer" : "default",
               display: "flex",
               alignItems: "center",
+              transition: "transform 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (currentTrack) e.currentTarget.style.transform = "scale(1.1)";
+            }}
+            onMouseLeave={(e) => {
+              if (currentTrack) e.currentTarget.style.transform = "scale(1)";
             }}
           >
             <SkipForward size={18} />
@@ -197,7 +257,7 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
-          <span style={{ fontSize: 11, color: "var(--text-muted, #6b7280)", minWidth: 32, textAlign: "right" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8", minWidth: 34, textAlign: "right" }}>
             {formatTime(progress)}
           </span>
           <input
@@ -214,16 +274,25 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
               cursor: "pointer",
             }}
           />
-          <span style={{ fontSize: 11, color: "var(--text-muted, #6b7280)", minWidth: 32 }}>
+          <span style={{ fontSize: 11, color: "#94a3b8", minWidth: 34 }}>
             {formatTime(duration)}
           </span>
         </div>
       </div>
 
       {/* Right: Volume & Expand */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 14, minWidth: 200, width: "25%" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 14,
+          minWidth: 200,
+          width: "25%",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Volume2 size={16} color="var(--text-secondary, #9ca3af)" />
+          <Volume2 size={16} color="#94a3b8" />
           <input
             type="range"
             min={0}
@@ -246,15 +315,22 @@ export const PlayerBar: React.FC<PlayerBarProps> = ({ onOpenNowPlaying }) => {
           style={{
             background: "transparent",
             border: "none",
-            color: "var(--text-secondary, #9ca3af)",
+            color: "#94a3b8",
             cursor: "pointer",
             padding: 6,
             borderRadius: 6,
             display: "flex",
             alignItems: "center",
+            transition: "all 0.15s ease",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary, #ffffff)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary, #9ca3af)")}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#ffffff";
+            e.currentTarget.style.transform = "scale(1.1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#94a3b8";
+            e.currentTarget.style.transform = "scale(1)";
+          }}
         >
           <Maximize2 size={18} />
         </button>

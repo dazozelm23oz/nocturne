@@ -21,9 +21,29 @@ function Layout({
   settings: LyricsSettings;
   updateSettings: (newSettings: Partial<LyricsSettings>) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<NavTab>("home");
-  const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    if (typeof window !== "undefined" && settings.rememberLastTab) {
+      const saved = localStorage.getItem("nocturne_last_tab") as NavTab;
+      if (saved) return saved;
+    }
+    if (settings.startupView === "Library") return "library";
+    return "home";
+  });
+
+  const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(
+    settings.startupView === "Now Playing"
+  );
   const { currentTrack } = usePlayer();
+
+  const handleSelectTab = (tab: NavTab) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined" && settings.rememberLastTab) {
+      localStorage.setItem("nocturne_last_tab", tab);
+    }
+  };
+
+  const scaleFactor = (settings.uiScale || 100) / 100;
+  const glassBlur = `${settings.glassBlurIntensity ?? 24}px`;
 
   return (
     <ThemeProvider theme={settings.themeCatalog || "Liner Dark"} albumArt={currentTrack?.coverArt}>
@@ -35,12 +55,15 @@ function Layout({
           overflow: "hidden",
           background: "var(--bg-primary, #0d0f12)",
           color: "var(--text-primary, #ffffff)",
+          zoom: scaleFactor !== 1 ? scaleFactor : undefined,
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+          // @ts-ignore
+          "--modal-glass-blur": glassBlur,
         }}
       >
-        {/* Left Sidebar */}
-        <Sidebar activeTab={activeTab} onSelectTab={setActiveTab} />
+        {/* Fixed Left Sidebar */}
+        <Sidebar activeTab={activeTab} onSelectTab={handleSelectTab} />
 
         {/* Center Main Area */}
         <div
@@ -74,7 +97,7 @@ function Layout({
             )}
           </main>
 
-          {/* Persistent Bottom Player Bar */}
+          {/* Fixed Bottom Player Bar */}
           <PlayerBar onOpenNowPlaying={() => setIsNowPlayingOpen(true)} />
         </div>
 

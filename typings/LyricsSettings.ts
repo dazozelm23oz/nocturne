@@ -181,6 +181,26 @@ export interface LyricsSettings {
   prefetchCount: number;
   themeCatalog: "Liner Dark" | "Glass" | "Nord" | "Catppuccin" | "Gruvbox" | "Auto";
   soloistPort: number;
+
+  // Comprehensive Settings Dashboard
+  startupView: "Home" | "Now Playing" | "Library";
+  rememberLastTab: boolean;
+  closeToSystemTray: boolean;
+
+  ytdlpAudioFormat: "webm" | "mp4" | "best";
+  crossfadeDuration: number;
+  normalizeVolume: boolean;
+
+  glassBlurIntensity: number;
+  visualizerStyle: "Bars" | "Waveform" | "Ambient Pulse";
+  uiScale: number;
+  showLyricsTranslation: boolean;
+
+  ytMusicCookie: string;
+  discordRichPresence: boolean;
+  discordStatusText: "Listening to {song}" | "Playing {artist}";
+
+  downloadFolder: string;
 }
 
 export const DEFAULT_LYRICS_SETTINGS: LyricsSettings = {
@@ -259,4 +279,23 @@ export const DEFAULT_LYRICS_SETTINGS: LyricsSettings = {
   prefetchCount: 2,
   themeCatalog: "Liner Dark",
   soloistPort: 8000,
+
+  startupView: "Home",
+  rememberLastTab: true,
+  closeToSystemTray: false,
+
+  ytdlpAudioFormat: "webm",
+  crossfadeDuration: 0,
+  normalizeVolume: false,
+
+  glassBlurIntensity: 24,
+  visualizerStyle: "Bars",
+  uiScale: 100,
+  showLyricsTranslation: false,
+
+  ytMusicCookie: "",
+  discordRichPresence: false,
+  discordStatusText: "Listening to {song}",
+
+  downloadFolder: "~/nocturne-hq/downloads",
 };

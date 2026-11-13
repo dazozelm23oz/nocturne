@@ -1,23 +1,64 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState } from "react";
-import { Search as SearchIcon, Play, Plus, Loader2 } from "lucide-react";
+import { Search as SearchIcon, Play, Plus, Loader2, Music } from "lucide-react";
 import { usePlayer } from "@/context/PlayerContext";
 import { TrackItem, useQueue } from "@/context/QueueContext";
+
+const ImageWithFallback: React.FC<{
+  src?: string;
+  alt: string;
+  fallbackText: string;
+  style?: React.CSSProperties;
+}> = ({ src, alt, fallbackText, style }) => {
+  const [error, setError] = useState(!src);
+
+  if (error || !src) {
+    const char = fallbackText.trim().charAt(0).toUpperCase() || "🎵";
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #1e293b, #334155)",
+          color: "#ffffff",
+          fontWeight: 700,
+          fontSize: 18,
+          userSelect: "none",
+          ...style,
+        }}
+      >
+        {char}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setError(true)}
+      style={{ objectFit: "cover", ...style }}
+    />
+  );
+};
 
 export const SearchView: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [results, setResults] = useState<TrackItem[]>([]);
   const { playTrack } = usePlayer();
   const { addToQueue } = useQueue();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    const q = query.trim();
+    if (!q) return;
 
     setIsSearching(true);
+    setHasSearched(true);
     try {
-      // Query python resolver/search or construct candidate track
-      const q = query.trim();
       const res = await fetch(`http://127.0.0.1:8000/resolve?title=${encodeURIComponent(q)}&artist=`);
       if (res.ok) {
         const data = await res.json();
@@ -30,38 +71,30 @@ export const SearchView: React.FC = () => {
         };
         setResults([foundTrack]);
       } else {
-        // Fallback candidate
-        setResults([
-          {
-            id: `search-${Date.now()}`,
-            title: q,
-            artist: "YouTube",
-            source: "youtube",
-          },
-        ]);
+        setResults([]);
       }
     } catch {
-      setResults([
-        {
-          id: `search-${Date.now()}`,
-          title: query.trim(),
-          artist: "YouTube",
-          source: "youtube",
-        },
-      ]);
+      setResults([]);
     } finally {
       setIsSearching(false);
     }
   };
 
   return (
-    <div style={{ padding: "32px 36px", overflowY: "auto", height: "100%", boxSizing: "border-box" }}>
+    <div
+      style={{
+        padding: "36px 44px 100px",
+        overflowY: "auto",
+        height: "100%",
+        boxSizing: "border-box",
+      }}
+    >
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: "var(--text-primary, #ffffff)" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, color: "#ffffff" }}>
           Search
         </h1>
-        <p style={{ margin: "6px 0 0", color: "var(--text-secondary, #9ca3af)", fontSize: 14 }}>
-          Find songs, artists, or albums across YouTube and local media
+        <p style={{ margin: "6px 0 0", color: "#94a3b8", fontSize: 14 }}>
+          Discover songs, artists, and live streams across YouTube Music and local library
         </p>
       </div>
 
@@ -71,39 +104,77 @@ export const SearchView: React.FC = () => {
             display: "flex",
             alignItems: "center",
             gap: 12,
-            background: "var(--bg-surface, #1a1f26)",
-            border: "1px solid var(--border-color, rgba(255,255,255,0.1))",
+            background: "rgba(20, 20, 25, 0.7)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
             borderRadius: 12,
-            padding: "0 16px",
-            maxWidth: 580,
+            padding: "0 18px",
+            maxWidth: 620,
+            transition: "border-color 0.2s ease",
           }}
         >
-          <SearchIcon size={20} color="var(--text-muted, #6b7280)" />
+          <SearchIcon size={20} color="#94a3b8" />
           <input
             type="text"
-            placeholder="What do you want to listen to?"
+            placeholder="Search tracks, artists, or paste a title..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             style={{
               flex: 1,
-              height: 46,
+              height: 48,
               background: "transparent",
               border: "none",
               outline: "none",
-              color: "var(--text-primary, #ffffff)",
+              color: "#ffffff",
               fontSize: 15,
             }}
           />
-          {isSearching && <Loader2 size={18} className="animate-spin" color="var(--accent-primary, #e11d48)" />}
+          {isSearching ? (
+            <Loader2 size={18} className="animate-spin" color="var(--accent-primary, #e11d48)" />
+          ) : (
+            <button
+              type="submit"
+              style={{
+                background: "var(--accent-primary, #e11d48)",
+                border: "none",
+                color: "#ffffff",
+                padding: "6px 14px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Search
+            </button>
+          )}
         </div>
       </form>
 
-      {results.length > 0 ? (
-        <section>
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: "var(--text-primary, #ffffff)" }}>
+      {isSearching && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 620 }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                height: 64,
+                borderRadius: 12,
+                background: "rgba(20, 20, 25, 0.5)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                animation: "pulse 1.5s infinite ease-in-out",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {!isSearching && results.length > 0 && (
+        <section style={{ maxWidth: 700 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "#ffffff" }}>
             Search Results
           </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {results.map((track) => (
               <div
                 key={track.id}
@@ -111,55 +182,68 @@ export const SearchView: React.FC = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "12px 16px",
-                  borderRadius: 10,
-                  background: "var(--card-bg, #141820)",
-                  border: "1px solid var(--border-color, rgba(255,255,255,0.06))",
+                  padding: "12px 18px",
+                  borderRadius: 12,
+                  background: "rgba(20, 20, 25, 0.7)",
+                  backdropFilter: "blur(24px)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.01)";
+                  e.currentTarget.style.borderColor = "var(--accent-primary, #e11d48)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 8,
-                      background: "var(--bg-surface, #222933)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 18,
+                      width: 46,
+                      height: 46,
+                      borderRadius: 10,
+                      overflow: "hidden",
+                      flexShrink: 0,
                     }}
                   >
-                    🎵
+                    <ImageWithFallback
+                      src={track.coverArt}
+                      alt={track.title}
+                      fallbackText={track.title}
+                      style={{ width: "100%", height: "100%" }}
+                    />
                   </div>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: "#ffffff" }}>
                       {track.title}
                     </div>
-                    <div style={{ fontSize: 13, color: "var(--text-secondary, #9ca3af)" }}>
+                    <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 2 }}>
                       {track.artist}
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <button
                     onClick={() => addToQueue(track)}
-                    title="Add to queue"
                     style={{
-                      background: "transparent",
-                      border: "1px solid var(--border-color, rgba(255,255,255,0.12))",
-                      color: "var(--text-primary, #ffffff)",
-                      padding: "8px 12px",
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      color: "#ffffff",
+                      padding: "8px 14px",
                       borderRadius: 8,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       gap: 6,
                       fontSize: 13,
+                      fontWeight: 500,
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <Plus size={16} />
+                    <Plus size={15} />
                     <span>Queue</span>
                   </button>
 
@@ -169,7 +253,7 @@ export const SearchView: React.FC = () => {
                       background: "var(--accent-primary, #e11d48)",
                       border: "none",
                       color: "#ffffff",
-                      padding: "8px 16px",
+                      padding: "8px 18px",
                       borderRadius: 8,
                       cursor: "pointer",
                       display: "flex",
@@ -177,9 +261,11 @@ export const SearchView: React.FC = () => {
                       gap: 6,
                       fontSize: 13,
                       fontWeight: 600,
+                      boxShadow: "0 4px 12px rgba(225, 29, 72, 0.4)",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <Play size={16} fill="#ffffff" />
+                    <Play size={15} fill="#ffffff" />
                     <span>Play</span>
                   </button>
                 </div>
@@ -187,9 +273,27 @@ export const SearchView: React.FC = () => {
             ))}
           </div>
         </section>
-      ) : query && !isSearching ? (
-        <div style={{ color: "var(--text-muted, #6b7280)", fontSize: 14 }}>Press Enter to search for &quot;{query}&quot;</div>
-      ) : null}
+      )}
+
+      {!isSearching && hasSearched && results.length === 0 && (
+        <div
+          style={{
+            padding: "48px 24px",
+            textAlign: "center",
+            background: "rgba(20, 20, 25, 0.7)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: 14,
+            maxWidth: 620,
+          }}
+        >
+          <Music size={40} color="#64748b" style={{ margin: "0 auto 12px" }} />
+          <h3 style={{ margin: "0 0 6px", color: "#ffffff", fontSize: 16 }}>No tracks found</h3>
+          <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>
+            Could not find any matching audio for &quot;{query}&quot;. Try different keywords.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

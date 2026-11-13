@@ -3,6 +3,14 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AnalyticsRecord {
+    pub timestamp: i64,
+    pub video_id: Option<String>,
+    pub listened_second: Option<i64>,
+    pub artist_name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct HourlyStat {
     pub hour: u32,
     pub count: u32,
@@ -38,71 +46,66 @@ pub fn init_analytics_db() -> Result<Connection, rusqlite::Error> {
     let conn = Connection::open(path)?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS nocturne_playback_events (
-            event_id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp INTEGER NOT NULL,
             video_id TEXT,
-            duration_second INTEGER,
             listened_second INTEGER,
-            artist_name TEXT,
-            song_title TEXT
+            artist_name TEXT
         )",
         [],
     )?;
     Ok(conn)
 }
 
-pub fn import_simpmusic_database(file_path: &str) -> Result<AnalyticsSummary, String> {
+pub fn clear_analytics() -> Result<(), String> {
+    let conn = init_analytics_db().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM nocturne_playback_events", [])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+pub fn import_simpmusic_database(file_path: &str) -> Result<Vec<AnalyticsRecord>, String> {
     let src_conn = Connection::open(file_path).map_err(|e| format!("Failed to open SimpMusic database: {}", e))?;
     let dst_conn = init_analytics_db().map_err(|e| format!("Failed to initialize Nocturne analytics database: {}", e))?;
 
     let mut stmt = src_conn.prepare(
         "SELECT 
-            pe.eventId,
             pe.timestamp,
             pe.videoId,
-            pe.durationSecond,
             pe.listenedSecond,
-            COALESCE(a.name, s.artistName, 'Unknown Artist') as artist_name,
-            COALESCE(s.title, 'Unknown Title') as song_title
+            COALESCE(a.name, 'Unknown Artist') as artist_name
          FROM playback_event pe
          LEFT JOIN event_artist ea ON pe.eventId = ea.eventId
-         LEFT JOIN artist a ON ea.channelId = a.channelId
-         LEFT JOIN song s ON pe.videoId = s.videoId"
+         LEFT JOIN artist a ON ea.channelId = a.channelId"
     ).map_err(|e| format!("Failed to query SimpMusic schema: {}", e))?;
 
-    let event_rows = stmt.query_map([], |row| {
-        Ok((
-            row.get::<_, i64>(0)?,
-            row.get::<_, i64>(1)?,
-            row.get::<_, Option<String>>(2)?,
-            row.get::<_, Option<i64>>(3)?,
-            row.get::<_, Option<i64>>(4)?,
-            row.get::<_, Option<String>>(5)?.unwrap_or_else(|| "Unknown Artist".to_string()),
-            row.get::<_, Option<String>>(6)?.unwrap_or_else(|| "Unknown Title".to_string()),
-        ))
-    }).map_err(|e| format!("Failed to read playback_event records: {}", e))?;
+    let record_rows = stmt.query_map([], |row| {
+        Ok(AnalyticsRecord {
+            timestamp: row.get(0)?,
+            video_id: row.get(1)?,
+            listened_second: row.get(2)?,
+            artist_name: row.get::<_, Option<String>>(3)?.unwrap_or_else(|| "Unknown Artist".to_string()),
+        })
+    }).map_err(|e| format!("Failed to read playback records: {}", e))?;
 
+    let mut records = Vec::new();
     let mut insert_stmt = dst_conn.prepare(
-        "INSERT OR REPLACE INTO nocturne_playback_events 
-         (event_id, timestamp, video_id, duration_second, listened_second, artist_name, song_title)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"
+        "INSERT INTO nocturne_playback_events 
+         (timestamp, video_id, listened_second, artist_name)
+         VALUES (?1, ?2, ?3, ?4)"
     ).map_err(|e| format!("Failed to prepare insert statement: {}", e))?;
 
-    for ev in event_rows {
-        if let Ok((event_id, timestamp, video_id, duration_second, listened_second, artist_name, song_title)) = ev {
-            let _ = insert_stmt.execute(params![
-                event_id,
-                timestamp,
-                video_id,
-                duration_second,
-                listened_second,
-                artist_name,
-                song_title,
-            ]);
-        }
+    for rec in record_rows.flatten() {
+        let _ = insert_stmt.execute(params![
+            rec.timestamp,
+            rec.video_id,
+            rec.listened_second,
+            rec.artist_name,
+        ]);
+        records.push(rec);
     }
 
-    get_analytics_summary()
+    Ok(records)
 }
 
 pub fn get_analytics_summary() -> Result<AnalyticsSummary, String> {
