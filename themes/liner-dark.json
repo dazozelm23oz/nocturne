@@ -1,0 +1,19 @@
+{
+  "name": "Liner Dark",
+  "id": "liner-dark",
+  "variables": {
+    "--bg-primary": "#0d0f12",
+    "--bg-secondary": "#14171d",
+    "--bg-surface": "#1a1f26",
+    "--bg-surface-hover": "#222933",
+    "--text-primary": "#f3f4f6",
+    "--text-secondary": "#9ca3af",
+    "--text-muted": "#6b7280",
+    "--accent-primary": "#e11d48",
+    "--accent-hover": "#f43f5e",
+    "--border-color": "#232936",
+    "--card-bg": "#141820",
+    "--player-bg": "#0f1217",
+    "--sidebar-bg": "#0a0c0e"
+  }
+}

@@ -1,5 +1,6 @@
 pub mod hq_music;
 mod hq_proxy;
+pub mod analytics;
 
 use std::sync::Arc;
 use tauri::State;
@@ -107,110 +108,40 @@ fn hq_get_backend_info(manager: State<'_, Option<Arc<hq_music::HqManager>>>) -> 
 }
 
 #[tauri::command]
-fn get_mpris_active_players() -> Result<Vec<String>, String> {
-    let output = std::process::Command::new("playerctl")
-        .arg("-l")
-        .output()
-        .map_err(|e| e.to_string())?;
+async fn send_soloist_command(action: String, port: Option<u16>) -> Result<(), String> {
+    let target_port = port.unwrap_or(8000);
+    let client = reqwest::Client::new();
+    let url = format!("http://127.0.0.1:{}/soloist/{}", target_port, action);
 
-    if output.status.success() {
-        let text = String::from_utf8_lossy(&output.stdout);
-        let players: Vec<String> = text
-            .lines()
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
-        Ok(players)
-    } else {
-        Ok(vec![])
+    let res = client
+        .post(&url)
+        .timeout(std::time::Duration::from_millis(600))
+        .send()
+        .await;
+
+    if res.is_ok() {
+        return Ok(());
     }
+
+    // Secondary fallback to GET
+    let fallback_url = format!("http://127.0.0.1:{}/{}", target_port, action);
+    let _ = client
+        .get(&fallback_url)
+        .timeout(std::time::Duration::from_millis(600))
+        .send()
+        .await;
+
+    Ok(())
 }
 
 #[tauri::command]
-fn get_mpris_playback_state(player: Option<String>) -> Result<String, String> {
-    let selected_player: Option<String> = match player.as_deref() {
-        Some(p) if !p.trim().is_empty() && p.trim() != "auto" => Some(p.trim().to_string()),
-        _ => {
-            let players = get_mpris_active_players().unwrap_or_default();
-            if players.is_empty() {
-                None
-            } else {
-                let mut playing_player = None;
-                for p in &players {
-                    let status_out = std::process::Command::new("playerctl")
-                        .arg(format!("--player={}", p))
-                        .args(["metadata", "--format", "{{status}}"])
-                        .output();
-                    if let Ok(out) = status_out {
-                        let status_str = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                        if status_str.eq_ignore_ascii_case("playing") {
-                            playing_player = Some(p.clone());
-                            break;
-                        }
-                    }
-                }
-                // Only if NO player is "Playing", fall back to the first player in the list.
-                Some(playing_player.unwrap_or_else(|| players[0].clone()))
-            }
-        }
-    };
-
-    let mut cmd = std::process::Command::new("playerctl");
-    if let Some(ref p) = selected_player {
-        cmd.arg(format!("--player={}", p));
-    }
-    cmd.args(["metadata", "--format", "{{title}}|{{artist}}|{{status}}|{{position}}|{{mpris:length}}"]);
-
-    match cmd.output() {
-        Ok(out) => Ok(String::from_utf8_lossy(&out.stdout).to_string()),
-        Err(e) => Err(e.to_string()),
-    }
+fn import_simpmusic_db(file_path: String) -> Result<analytics::AnalyticsSummary, String> {
+    analytics::import_simpmusic_database(&file_path)
 }
 
 #[tauri::command]
-fn send_mpris_command(action: String, player: Option<String>) -> Result<(), String> {
-    let subcmd = match action.as_str() {
-        "next" => "next",
-        "prev" => "previous",
-        "playpause" => "play-pause",
-        "play" => "play",
-        "pause" => "pause",
-        _ => return Err("Unknown action".into()),
-    };
-
-    let mut cmd = std::process::Command::new("playerctl");
-    if let Some(ref p) = player {
-        if !p.is_empty() && p != "auto" {
-            cmd.arg(format!("--player={}", p));
-        }
-    }
-    cmd.arg(subcmd);
-
-    let status = cmd.status().map_err(|e| e.to_string())?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err("Command failed".into())
-    }
-}
-
-#[tauri::command]
-fn seek_mpris_media(position_ms: i64, player: Option<String>) -> Result<(), String> {
-    let pos_secs = position_ms as f64 / 1000.0;
-    let mut cmd = std::process::Command::new("playerctl");
-    if let Some(ref p) = player {
-        if !p.is_empty() && p != "auto" {
-            cmd.arg(format!("--player={}", p));
-        }
-    }
-    cmd.args(["position", &pos_secs.to_string()]);
-
-    let status = cmd.status().map_err(|e| e.to_string())?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err("Seek failed".into())
-    }
+fn get_analytics_data() -> Result<analytics::AnalyticsSummary, String> {
+    analytics::get_analytics_summary()
 }
 
 #[tauri::command]
@@ -263,21 +194,20 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(hq_manager)
         .invoke_handler(tauri::generate_handler![
             close_app,
             hq_search,
             hq_resolve,
             hq_get_backend_info,
-            get_mpris_active_players,
-            get_mpris_playback_state,
-            send_mpris_command,
-            seek_mpris_media,
+            send_soloist_command,
+            import_simpmusic_db,
+            get_analytics_data,
             get_real_gpu
         ])
         .setup(move |_app| {
-            
-
             if hq_enabled {
                 tauri::async_runtime::spawn(async {
                     hq_proxy::start_hq_stream_proxy().await;

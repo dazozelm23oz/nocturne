@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { LyricsSettings, HqQualityOption } from "@/typings/LyricsSettings";
-import { sendLocalMediaCommand } from "@/lib/localMediaBridge";
+const sendLocalMediaCommand = async (_cmd: string, _player?: string): Promise<void> => {};
 import { sanitizeTrackForSearch } from "@/lib/trackVariants";
 
 let activeHqAudioElement: HTMLAudioElement | null = null;

@@ -1,0 +1,19 @@
+{
+  "name": "Nord",
+  "id": "nord",
+  "variables": {
+    "--bg-primary": "#2e3440",
+    "--bg-secondary": "#3b4252",
+    "--bg-surface": "#434c5e",
+    "--bg-surface-hover": "#4c566a",
+    "--text-primary": "#eceff4",
+    "--text-secondary": "#d8dee9",
+    "--text-muted": "#e5e9f0",
+    "--accent-primary": "#88c0d0",
+    "--accent-hover": "#81a1c1",
+    "--border-color": "#4c566a",
+    "--card-bg": "#3b4252",
+    "--player-bg": "#2e3440",
+    "--sidebar-bg": "#242933"
+  }
+}

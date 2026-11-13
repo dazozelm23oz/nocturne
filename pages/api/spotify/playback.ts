@@ -1,7 +1,7 @@
 import spotifyApi from "@/lib/spotify";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getToken, JWT } from "next-auth/jwt";
-import { sendLocalMediaCommand } from "@/lib/localMediaBridge";
+const sendLocalMediaCommand = async (_action: string): Promise<boolean> => false;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "PUT" && req.method !== "POST") {

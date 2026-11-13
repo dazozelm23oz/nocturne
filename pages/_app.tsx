@@ -6,7 +6,6 @@ import { Hind_Madurai, Noto_Sans } from "next/font/google";
 import Head from "next/head";
 import { useEffect } from "react";
 import Providers from "@/providers";
-import SingleInstanceGuard from "@/components/SingleInstanceGuard";
 
 const tamil = Hind_Madurai({
   fallback: ["sans-serif"],
@@ -96,9 +95,7 @@ export default function App({
         `}
       </style>
       <Providers>
-        <SingleInstanceGuard>
-          <Component {...pageProps} />
-        </SingleInstanceGuard>
+        <Component {...pageProps} />
       </Providers>
     </SessionProvider>
   );

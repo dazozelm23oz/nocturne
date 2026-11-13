@@ -1,0 +1,19 @@
+{
+  "name": "Catppuccin",
+  "id": "catppuccin",
+  "variables": {
+    "--bg-primary": "#1e1e2e",
+    "--bg-secondary": "#181825",
+    "--bg-surface": "#313244",
+    "--bg-surface-hover": "#45475a",
+    "--text-primary": "#cdd6f4",
+    "--text-secondary": "#a6adc8",
+    "--text-muted": "#6c7086",
+    "--accent-primary": "#cba6f7",
+    "--accent-hover": "#f5c2e7",
+    "--border-color": "#45475a",
+    "--card-bg": "#181825",
+    "--player-bg": "#11111b",
+    "--sidebar-bg": "#11111b"
+  }
+}

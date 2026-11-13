@@ -4,12 +4,10 @@ import { Data } from "@/typings/Position";
 import { Song } from "@/typings/Song";
 import { useSession, signOut, signIn } from "next-auth/react";
 import { prewarmQueue, prewarmSingleTrack } from "@/lib/queuePrefetchCoordinator";
-import {
-  getLocalPlaybackState,
-  sendLocalMediaCommand,
-  seekLocalMedia,
-  getArtworkForTrack,
-} from "@/lib/localMediaBridge";
+const getLocalPlaybackState = async (_p?: string): Promise<any> => null;
+const sendLocalMediaCommand = async (_cmd: string, _p?: string): Promise<void> => {};
+const seekLocalMedia = async (_ms: number, _p?: string): Promise<void> => {};
+const getArtworkForTrack = async (_title: string, _artist?: string): Promise<string | undefined> => undefined;
 import { cleanTrackTitle, sanitizeTrackForSearch } from "@/lib/trackVariants";
 import { invoke } from "@tauri-apps/api/core";
 import {

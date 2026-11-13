@@ -176,6 +176,11 @@ export interface LyricsSettings {
   lyricSourcesPriority: LyricSourceId[];
   karaokeSourcesPriority: LyricSourceId[];
   disabledLyricSources: LyricSourceId[];
+
+  // Music Hub & Playback Architecture
+  prefetchCount: number;
+  themeCatalog: "Liner Dark" | "Glass" | "Nord" | "Catppuccin" | "Gruvbox" | "Auto";
+  soloistPort: number;
 }
 
 export const DEFAULT_LYRICS_SETTINGS: LyricsSettings = {
@@ -249,4 +254,9 @@ export const DEFAULT_LYRICS_SETTINGS: LyricsSettings = {
   lyricSourcesPriority: ["lrclib", "netease", "spotify", "kugou", "musixmatch", "genius"],
   karaokeSourcesPriority: ["netease", "spotify", "kugou", "lrclib"],
   disabledLyricSources: [],
+
+  // Music Hub Defaults
+  prefetchCount: 2,
+  themeCatalog: "Liner Dark",
+  soloistPort: 8000,
 };

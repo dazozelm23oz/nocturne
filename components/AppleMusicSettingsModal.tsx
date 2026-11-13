@@ -29,7 +29,7 @@ import AmbientStardust from "@/components/AmbientStardust";
 import { GruvboxIcon, GruvboxIconName } from "@/components/icons/GruvboxIcon";
 import { ALL_LYRIC_SOURCES, DEFAULT_LYRIC_SOURCES_PRIORITY, DEFAULT_KARAOKE_SOURCES_PRIORITY, LyricSourceId } from "@/lib/lyricsSources";
 import { usePerformanceMetrics } from "@/lib/performanceMetrics";
-import { getActivePlayers } from "@/lib/localMediaBridge";
+const getActivePlayers = async (): Promise<string[]> => ["auto"];
 
 function parseRgbString(colorStr?: string): string {
   if (!colorStr) return "29, 185, 84";

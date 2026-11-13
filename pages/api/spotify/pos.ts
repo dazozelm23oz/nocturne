@@ -1,7 +1,7 @@
 import spotifyApi from "@/lib/spotify";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getToken } from "next-auth/jwt";
-import { getLocalPlaybackState } from "@/lib/localMediaBridge";
+const getLocalPlaybackState = async (): Promise<any> => null;
 import {
   isSpotifyRateLimited,
   triggerSpotifyRateLimit,
