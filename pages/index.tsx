@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Head from "next/head";
 import { Sidebar, NavTab } from "@/components/Sidebar";
 import { TopHeader } from "@/components/TopHeader";
@@ -14,7 +14,7 @@ import { QueueProvider } from "@/context/QueueContext";
 import { PlayerProvider, usePlayer } from "@/context/PlayerContext";
 import { LyricsSettings, DEFAULT_LYRICS_SETTINGS } from "@/typings/LyricsSettings";
 
-function Layout({
+function LinerShell({
   settings,
   updateSettings,
 }: {
@@ -30,6 +30,9 @@ function Layout({
     return "home";
   });
 
+  const [history, setHistory] = useState<NavTab[]>([activeTab]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(
     settings.startupView === "Now Playing"
   );
@@ -37,55 +40,96 @@ function Layout({
 
   const handleSelectTab = (tab: NavTab) => {
     setActiveTab(tab);
+    setHistory((prev) => [...prev.slice(0, historyIndex + 1), tab]);
+    setHistoryIndex((prev) => prev + 1);
     if (typeof window !== "undefined" && settings.rememberLastTab) {
       localStorage.setItem("nocturne_last_tab", tab);
     }
   };
 
+  const handleBack = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setActiveTab(history[newIndex]);
+    }
+  };
+
+  const handleForward = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setActiveTab(history[newIndex]);
+    }
+  };
+
   const scaleFactor = (settings.uiScale || 100) / 100;
-  const glassBlur = `${settings.glassBlurIntensity ?? 24}px`;
 
   return (
     <ThemeProvider theme={settings.themeCatalog || "Liner Dark"} albumArt={currentTrack?.coverArt}>
+      {/* 
+        Liner 1:1 App Shell Container:
+        - Exact 6px shell edge gap & outer padding
+        - 52px left sidebar
+        - 50px top header island
+        - Floating main glass container (12px rounded-item)
+        - 64px bottom floating mini player
+      */}
       <div
         style={{
           display: "flex",
           height: "100vh",
           width: "100vw",
           overflow: "hidden",
-          background: "var(--bg-primary, #0d0f12)",
+          padding: 6,
+          gap: 6,
+          boxSizing: "border-box",
+          background: "#000000",
           color: "var(--text-primary, #ffffff)",
           zoom: scaleFactor !== 1 ? scaleFactor : undefined,
           fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-          // @ts-ignore
-          "--modal-glass-blur": glassBlur,
+            '"SF Pro", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          userSelect: "none",
         }}
       >
-        {/* Fixed Left Sidebar */}
+        {/* Left Narrow 52px Sidebar Island */}
         <Sidebar activeTab={activeTab} onSelectTab={handleSelectTab} />
 
-        {/* Center Main Area */}
+        {/* Right Application Column */}
         <div
           style={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
             height: "100%",
+            gap: 6,
+            minWidth: 0,
             overflow: "hidden",
             position: "relative",
           }}
         >
-          {/* Top Window / App Header */}
-          <TopHeader />
+          {/* Top Header Island */}
+          <TopHeader
+            onBack={handleBack}
+            onForward={handleForward}
+            canGoBack={historyIndex > 0}
+            canGoForward={historyIndex < history.length - 1}
+          />
 
-          {/* Tab Content View */}
+          {/* Main Floating Glass Surface (12px rounded-item) */}
           <main
             style={{
               flex: 1,
+              borderRadius: 12,
+              background: "var(--bg-glass, rgba(70, 70, 70, 0.2))",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: "1px solid var(--border-white-alpha-14, rgba(255, 255, 255, 0.08))",
+              boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
               overflowY: "auto",
               overflowX: "hidden",
               position: "relative",
+              minHeight: 0,
             }}
           >
             {activeTab === "home" && <HomeView />}
@@ -97,7 +141,7 @@ function Layout({
             )}
           </main>
 
-          {/* Fixed Bottom Player Bar */}
+          {/* Bottom Floating MiniPlayer (64px) */}
           <PlayerBar onOpenNowPlaying={() => setIsNowPlayingOpen(true)} />
         </div>
 
@@ -147,7 +191,7 @@ export default function IndexPage() {
       </Head>
       <QueueProvider settings={settings}>
         <PlayerProvider settings={settings}>
-          <Layout settings={settings} updateSettings={updateSettings} />
+          <LinerShell settings={settings} updateSettings={updateSettings} />
         </PlayerProvider>
       </QueueProvider>
     </>
